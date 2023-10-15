@@ -9,6 +9,7 @@ from ... import __version__
 from ...control.config_manager import config
 from ...definitions import (
     Color3f,
+    Dimensions3D,
     LabelingMode,
     ObjectDetectionFormat,
     SemanticSegmentationFormat,
@@ -31,16 +32,18 @@ class ClassConfig:
     name: str
     id: int
     color: Color3f
+    dimension: Dimensions3D
 
     @classmethod
     def from_dict(cls, data: dict) -> "ClassConfig":
-        return cls(name=data["name"], id=data["id"], color=hex_to_rgb(data["color"]))
+        return cls(name=data["name"], id=data["id"], color=hex_to_rgb(data["color"]), dimension=data["dimension"])
 
     def to_dict(self) -> dict:
         return {
             "name": self.name,
             "id": self.id,
             "color": rgb_to_hex(self.color),
+            "dimension": self.dimension
         }
 
 
@@ -65,7 +68,7 @@ class LabelConfig(object, metaclass=SingletonABCMeta):
             self.type = LabelingMode(data["type"])
             self.format = data["format"]
         else:
-            self.classes = [ClassConfig("cart", 0, color=Color3f(1, 0, 0))]
+            self.classes = [ClassConfig("cart", 0, color=Color3f(1, 0, 0), dimension=(1,1,1))]
             self.default = 0
             self.type = LabelingMode.OBJECT_DETECTION
             self.format = ObjectDetectionFormat.CENTROID_REL

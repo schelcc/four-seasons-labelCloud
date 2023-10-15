@@ -1,6 +1,9 @@
+import os
 import logging
+import json
+import yaml
 from typing import Optional
-
+import shutil
 import numpy as np
 from PyQt5 import QtGui
 from PyQt5.QtCore import QPoint
@@ -68,13 +71,14 @@ class Controller:
             previous_bboxes = self.bbox_controller.bboxes
             self.pcd_manager.get_next_pcd()
             self.reset()
-            self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())
+            self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())   
 
             if not self.bbox_controller.bboxes and config.getboolean(
                 "LABEL", "propagate_labels"
             ):
                 self.bbox_controller.set_bboxes(previous_bboxes)
             self.bbox_controller.set_active_bbox(0)
+
         else:
             self.view.update_progress(len(self.pcd_manager.pcds))
             self.view.button_next_pcd.setEnabled(False)

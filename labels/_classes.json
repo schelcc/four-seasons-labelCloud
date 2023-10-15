@@ -1,19 +1,34 @@
 {
     "classes": [
         {
-            "name": "unassigned",
+            "name": "vehicle",
             "id": 0,
-            "color": "#9da2ab"
+            "color": "#ff0000",
+            "dimension": [
+                4.75,
+                1.95,
+                1.75
+            ]
         },
         {
-            "name": "cart",
+            "name": "perdestrian",
             "id": 1,
-            "color": "#f156ff"
+            "color": "#e5d300",
+            "dimension": [
+                1.0,
+                1.0,
+                1.75
+            ]
         },
         {
-            "name": "box",
+            "name": "cyclist",
             "id": 2,
-            "color": "#f57900"
+            "color": "#eb7fff",
+            "dimension": [
+                3.0,
+                1.0,
+                1.55
+            ]
         }
     ],
     "default": 0,

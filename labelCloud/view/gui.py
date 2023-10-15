@@ -1,7 +1,10 @@
 import logging
+import numpy as np
 import os
 import re
 import sys
+import copy
+import shutil
 import traceback
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Set
@@ -9,7 +12,7 @@ from typing import TYPE_CHECKING, Optional, Set
 import pkg_resources
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtCore import QEvent
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QPainter, QPen
 from PyQt5.QtWidgets import (
     QAction,
     QActionGroup,
@@ -134,7 +137,16 @@ class GUI(QtWidgets.QMainWindow):
                     .joinpath("icons")
                 )
             )
-        )
+        )        
+
+        # Image List (LXH)
+        self.bbox_previous = None
+        self.cam_list = config.getlist("FILE", "image_list")
+        self.imageLabelList = []
+        for i in range(len(self.cam_list)):
+            imageLabel = QLabel()
+            imageLabel.setWindowTitle(f"2D Image ({self.cam_list[i]})")
+            self.imageLabelList.append(imageLabel)
 
         # MENU BAR
         # File
@@ -184,9 +196,9 @@ class GUI(QtWidgets.QMainWindow):
 
         # 2d image viewer
         self.button_show_image: QtWidgets.QPushButton
-        self.button_show_image.setVisible(
-            config.getboolean("USER_INTERFACE", "show_2d_image")
-        )
+        # self.button_show_image.setVisible(
+        #     config.getboolean("USER_INTERFACE", "show_2d_image")
+        # )
 
         # label mode selection
         self.button_pick_bbox: QtWidgets.QPushButton
@@ -242,6 +254,7 @@ class GUI(QtWidgets.QMainWindow):
         self.label_volume: QtWidgets.QLabel
 
         self.controller = control
+        self.controller.pcd_manager.pcd_postfix = config.get("POINTCLOUD", "pointcloud_postfix") # LXH
 
         # Connect all events to functions
         self.connect_events()
@@ -265,67 +278,70 @@ class GUI(QtWidgets.QMainWindow):
         self.timer = QtCore.QTimer(self)
         self.timer.setInterval(20)  # period, in milliseconds
         self.timer.timeout.connect(self.controller.loop_gui)
-        self.timer.start()
+        self.timer.start()   
 
     # Event connectors
     def connect_events(self) -> None:
         # POINTCLOUD CONTROL
-        self.button_next_pcd.clicked.connect(
-            lambda: self.controller.next_pcd(save=True)
-        )
+        self.button_next_pcd.clicked.connect(lambda: self.controller.next_pcd(save=True))
+        self.button_next_pcd.clicked.connect(lambda: self.show_2d_image())
+
         self.button_prev_pcd.clicked.connect(self.controller.prev_pcd)
+        self.button_prev_pcd.clicked.connect(lambda: self.show_2d_image())
 
         # BBOX CONTROL
-        self.button_bbox_up.pressed.connect(
-            lambda: self.controller.bbox_controller.translate_along_z()
-        )
-        self.button_bbox_down.pressed.connect(
-            lambda: self.controller.bbox_controller.translate_along_z(down=True)
-        )
-        self.button_bbox_left.pressed.connect(
-            lambda: self.controller.bbox_controller.translate_along_x(left=True)
-        )
-        self.button_bbox_right.pressed.connect(
-            self.controller.bbox_controller.translate_along_x
-        )
-        self.button_bbox_forward.pressed.connect(
-            lambda: self.controller.bbox_controller.translate_along_y(forward=True)
-        )
-        self.button_set_pcd.pressed.connect(lambda: self.ask_custom_index())
-        self.button_bbox_backward.pressed.connect(
-            lambda: self.controller.bbox_controller.translate_along_y()
-        )
+        self.button_bbox_up.pressed.connect(lambda: self.controller.bbox_controller.translate_along_z())
+        self.button_bbox_up.pressed.connect(lambda: self.show_2d_image())
 
-        self.dial_bbox_z_rotation.valueChanged.connect(
-            lambda x: self.controller.bbox_controller.rotate_around_z(x, absolute=True)
-        )
-        self.button_bbox_decrease_dimension.clicked.connect(
-            lambda: self.controller.bbox_controller.scale(decrease=True)
-        )
-        self.button_bbox_increase_dimension.clicked.connect(
-            lambda: self.controller.bbox_controller.scale()
-        )
+        self.button_bbox_down.pressed.connect(lambda: self.controller.bbox_controller.translate_along_z(down=True))
+        self.button_bbox_down.pressed.connect(lambda: self.show_2d_image())
+
+        self.button_bbox_left.pressed.connect(lambda: self.controller.bbox_controller.translate_along_x(left=True))
+        self.button_bbox_left.pressed.connect(lambda: self.show_2d_image())
+
+        self.button_bbox_right.pressed.connect(self.controller.bbox_controller.translate_along_x)
+        self.button_bbox_right.pressed.connect(lambda: self.show_2d_image())
+
+        self.button_bbox_forward.pressed.connect(lambda: self.controller.bbox_controller.translate_along_y(forward=True))
+        self.button_bbox_forward.pressed.connect(lambda: self.show_2d_image())
+
+        self.button_set_pcd.pressed.connect(lambda: self.ask_custom_index())
+
+        self.button_bbox_backward.pressed.connect(lambda: self.controller.bbox_controller.translate_along_y())
+        self.button_bbox_backward.pressed.connect(lambda: self.show_2d_image())
+
+        self.dial_bbox_z_rotation.valueChanged.connect(lambda x: self.controller.bbox_controller.rotate_around_z(x, absolute=True))
+        self.dial_bbox_z_rotation.valueChanged.connect(lambda: self.show_2d_image())
+
+        self.button_bbox_decrease_dimension.clicked.connect(lambda: self.controller.bbox_controller.scale(decrease=True))
+        self.button_bbox_decrease_dimension.clicked.connect(lambda: self.show_2d_image())
+
+        self.button_bbox_increase_dimension.clicked.connect(lambda: self.controller.bbox_controller.scale())
+        self.button_bbox_increase_dimension.clicked.connect(lambda: self.show_2d_image())
+
 
         # LABELING CONTROL
         self.current_class_dropdown.currentTextChanged.connect(
             self.controller.bbox_controller.set_classname
         )
-        self.button_deselect_label.clicked.connect(
-            self.controller.bbox_controller.deselect_bbox
-        )
-        self.button_delete_label.clicked.connect(
-            self.controller.bbox_controller.delete_current_bbox
-        )
-        self.label_list.currentRowChanged.connect(
-            self.controller.bbox_controller.set_active_bbox
-        )
+
+        self.button_deselect_label.clicked.connect(self.controller.bbox_controller.deselect_bbox)
+        self.button_deselect_label.clicked.connect(lambda: self.show_2d_image())
+
+        self.button_delete_label.clicked.connect(self.controller.bbox_controller.delete_current_bbox)
+        self.button_delete_label.clicked.connect(lambda: self.show_2d_image())
+
+        self.label_list.currentRowChanged.connect(self.controller.bbox_controller.set_active_bbox)
+        self.label_list.currentRowChanged.connect(lambda: self.show_2d_image())
+
         self.button_assign_label.clicked.connect(
             self.controller.bbox_controller.assign_point_label_in_active_box
         )
+
         # context menu
-        self.act_delete_class.triggered.connect(
-            self.controller.bbox_controller.delete_current_bbox
-        )
+        self.act_delete_class.triggered.connect(self.controller.bbox_controller.delete_current_bbox)
+        self.act_delete_class.triggered.connect(lambda: self.show_2d_image())
+
         self.act_crop_pointcloud_inside.triggered.connect(
             self.controller.crop_pointcloud_inside_active_bbox
         )
@@ -415,6 +431,8 @@ class GUI(QtWidgets.QMainWindow):
 
     # Collect, filter and forward events to viewer
     def eventFilter(self, event_object, event) -> bool:
+        self.bbox_previous = copy.deepcopy(self.controller.bbox_controller.get_active_bbox())
+
         # Keyboard Events
         if (event.type() == QEvent.KeyPress) and event_object in [
             self,
@@ -462,35 +480,78 @@ class GUI(QtWidgets.QMainWindow):
 
     def show_2d_image(self):
         """Searches for a 2D image with the point cloud name and displays it in a new window."""
-        image_folder = config.getpath("FILE", "image_folder")
+        #image_folder = config.getpath("FILE", "image_folder")
 
         # Look for image files with the name of the point cloud
+        if not len(self.controller.pcd_manager.pcds):
+            return
+            
         pcd_name = self.controller.pcd_manager.pcd_path.stem
-        image_file_pattern = re.compile(
-            f"{pcd_name}+(\\.(?i:(jpe?g|png|gif|bmp|tiff)))"
-        )
+        postfix_length = len(self.controller.pcd_manager.pcd_postfix)-4
+        file_name = pcd_name[:-postfix_length]
 
-        try:
-            image_name = next(
-                filter(image_file_pattern.search, os.listdir(image_folder))
-            )
-        except StopIteration:
-            QMessageBox.information(
-                self,
-                "No 2D Image File",
-                (
-                    f"Could not find a related image in the image folder ({image_folder}).\n"
-                    "Check your path to the folder or if an image for this point cloud exists."
-                ),
-                QMessageBox.Ok,
-            )
-        else:
-            image_path = image_folder.joinpath(image_name)
+        for i in range(len(self.cam_list)):
+            image_path = str(self.controller.pcd_manager.pcd_folder.absolute())+'/'+file_name+self.cam_list[i]
+            if not os.path.exists(image_path):
+                print('No Enough Image! Skip this.')
+                return
+            
+        P_matrix = config.getlist("FILE", "pmatrix_list")
+        P_matrix = np.array(P_matrix).reshape(-1,3,4)
+        margin = 100
+        for i in range(len(self.cam_list)):
+            image_path = str(self.controller.pcd_manager.pcd_folder.absolute())+'/'+file_name+self.cam_list[i]
             image = QtGui.QImage(QtGui.QImageReader(str(image_path)).read())
-            self.imageLabel = QLabel()
-            self.imageLabel.setWindowTitle(f"2D Image ({image_name})")
-            self.imageLabel.setPixmap(QPixmap.fromImage(image))
-            self.imageLabel.show()
+            pixelmap = QPixmap.fromImage(image)
+            pixelmap = pixelmap.scaledToWidth(1024)
+            width, height = 1024, 768
+
+            # draw active bbox to the image
+            corners = np.array([[-1,-1,-1],
+                                [-1,1,-1],
+                                [-1,1,1],
+                                [-1,-1,1],
+                                [1,-1,-1],
+                                [1,1,-1],
+                                [1,1,1],
+                                [1,-1,1]]).astype(np.float64)
+            
+            bbox = self.controller.bbox_controller.get_active_bbox()
+            corners[:,0] *= bbox.length/2.0
+            corners[:,1] *= bbox.width/2.0
+            corners[:,2] *= bbox.height/2.0
+            angle = bbox.z_rotation/180.0*np.pi
+            Rz = np.array([[np.cos(angle),-np.sin(angle),0],[np.sin(angle),np.cos(angle),0],[0,0,1]])
+            corners = np.transpose(np.matmul(Rz, np.transpose(corners, (1,0))), (1,0))   
+            corners[:,0] += bbox.center[0]
+            corners[:,1] += bbox.center[1]
+            corners[:,2] += bbox.center[2]       
+            pts_homo = np.ones((corners.shape[0], 4))
+            pts_homo[:,0:3] = corners   
+
+            #     
+            P = P_matrix[i]
+            pts_img = np.matmul(P, pts_homo.transpose()).transpose()
+            pts_img[:,0] /= pts_img[:,2]
+            pts_img[:,1] /= pts_img[:,2]    
+            x = pts_img[:,0]
+            y = pts_img[:,1]
+
+            x_mean = np.mean(x)
+            y_mean = np.mean(y)
+            if not (x_mean<-margin or x_mean>width+margin or y_mean<-margin or y_mean>height+margin):
+                painter = QPainter(pixelmap)
+                painter.setPen(QPen(QtCore.Qt.red, 1, QtCore.Qt.DashLine))
+                for m in range(4):
+                    n = (m+1)%4
+                    painter.drawLine(x[m],y[m],x[n],y[n])
+                    painter.drawLine(x[m+4],y[m+4],x[n+4],y[n+4])
+                    painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
+                painter.end()
+
+            self.imageLabelList[i].setPixmap(pixelmap)
+            self.imageLabelList[i].update()                     
+            self.imageLabelList[i].show()
 
     def show_no_pointcloud_dialog(
         self, pcd_folder: Path, pcd_extensions: Set[str]
@@ -546,6 +607,17 @@ class GUI(QtWidgets.QMainWindow):
             self.edit_rot_z.setText(str(round(bbox.get_z_rotation(), 1)))
 
             self.label_volume.setText(str(round(bbox.get_volume(), viewing_precision)))
+        if self.bbox_previous is None and bbox:
+            self.show_2d_image()
+        if self.bbox_previous is not None and bbox:
+            # change check
+            if (self.bbox_previous.center != bbox.center 
+                or self.bbox_previous.height != bbox.height
+                or self.bbox_previous.width != bbox.width
+                or self.bbox_previous.length != bbox.length
+                or self.bbox_previous.z_rotation != bbox.z_rotation):
+                self.show_2d_image()
+
 
     def update_bbox_parameter(self, parameter: str) -> None:
         str_value = None

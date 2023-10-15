@@ -1,0 +1,349 @@
+index: '1692390029096385292'
+labels:
+- box3d:
+    dimension:
+      height: 1.549
+      length: 4.273
+      width: 1.971
+    location:
+      x: 5.442
+      y: -11.814
+      z: -1.508
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 1.621
+  category: vehicle
+  id: 1
+- box3d:
+    dimension:
+      height: 2.764
+      length: 6.891
+      width: 2.688
+    location:
+      x: 11.571
+      y: -4.102
+      z: -0.604
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 3.138
+  category: vehicle
+  id: 2
+- box3d:
+    dimension:
+      height: 1.533
+      length: 4.554
+      width: 2.038
+    location:
+      x: 2.837
+      y: -12.006
+      z: -1.537
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 1.592
+  category: vehicle
+  id: 3
+- box3d:
+    dimension:
+      height: 1.799
+      length: 4.554
+      width: 2.049
+    location:
+      x: 8.076
+      y: -11.717
+      z: -1.334
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 1.5539999999999998
+  category: vehicle
+  id: 4
+- box3d:
+    dimension:
+      height: 1.615
+      length: 4.414
+      width: 1.967
+    location:
+      x: -10.221
+      y: -11.494
+      z: -1.553
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 1.5879999999999999
+  category: vehicle
+  id: 5
+- box3d:
+    dimension:
+      height: 1.71
+      length: 4.649
+      width: 2.108
+    location:
+      x: -12.708
+      y: -11.52
+      z: -1.497
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 1.523
+  category: vehicle
+  id: 6
+- box3d:
+    dimension:
+      height: 1.944
+      length: 4.272
+      width: 2.011
+    location:
+      x: -7.503
+      y: -11.513
+      z: -1.433
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: -1.57
+  category: vehicle
+  id: 7
+- box3d:
+    dimension:
+      height: 1.8310000000000002
+      length: 4.563
+      width: 2.02
+    location:
+      x: -36.692
+      y: -11.346000000000009
+      z: -1.6610000000000007
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 1.5707963267948966
+  category: vehicle
+  id: 8
+- box3d:
+    dimension:
+      height: 1.629
+      length: 4.471
+      width: 1.981
+    location:
+      x: -28.712
+      y: -11.330999999999996
+      z: -1.5999999999999999
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 1.574
+  category: vehicle
+  id: 9
+- box3d:
+    dimension:
+      height: 1.591
+      length: 4.589
+      width: 2.025
+    location:
+      x: 8.126
+      y: -28.342
+      z: -2.182
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 1.304
+  category: vehicle
+  id: 10
+- box3d:
+    dimension:
+      height: 1.8889856147670814
+      length: 5.016999999999999
+      width: 2.243507408120066
+    location:
+      x: -20.38399999999999
+      y: -12.337000000000003
+      z: -1.463999999999999
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 1.600820061220085
+  category: vehicle
+  id: 11
+- box3d:
+    dimension:
+      height: 1.57
+      length: 4.55
+      width: 2.014
+    location:
+      x: 11.232
+      y: -11.766
+      z: -1.475
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: -1.3500000000000003
+  category: vehicle
+  id: 12
+- box3d:
+    dimension:
+      height: 1.74
+      length: 0.904
+      width: 0.842
+    location:
+      x: -3.899
+      y: -12.652
+      z: -1.542
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 2.007
+  category: pedestrian
+  id: 13
+- box3d:
+    dimension:
+      height: 1.845
+      length: 4.813
+      width: 2.261
+    location:
+      x: -2.293
+      y: -12.012
+      z: -1.423
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 1.6439999999999997
+  category: vehicle
+  id: 14
+- box3d:
+    dimension:
+      height: 1.591
+      length: 4.436
+      width: 1.963
+    location:
+      x: 7.606
+      y: -47.377
+      z: -2.72
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: -1.4619999999999997
+  category: vehicle
+  id: 15
+- box3d:
+    dimension:
+      height: 2.108
+      length: 5.446
+      width: 2.302
+    location:
+      x: 0.058
+      y: -28.343
+      z: -1.83
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 1.511
+  category: vehicle
+  id: 16
+- box3d:
+    dimension:
+      height: 1.516
+      length: 3.998
+      width: 1.833
+    location:
+      x: 10.859
+      y: -11.473
+      z: -1.426
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 1.572
+  category: vehicle
+  id: 17
+- box3d:
+    dimension:
+      height: 1.817
+      length: 4.763
+      width: 2.135
+    location:
+      x: 4.929
+      y: -41.17
+      z: -2.384
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: -1.556
+  category: vehicle
+  id: 18
+- box3d:
+    dimension:
+      height: 1.74
+      length: 0.872
+      width: 0.805
+    location:
+      x: -10.6
+      y: 6.57
+      z: -0.836
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 0.02
+  category: pedestrian
+  id: 19
+- box3d:
+    dimension:
+      height: 1.612
+      length: 4.572
+      width: 2.151
+    location:
+      x: 10.489
+      y: -11.849
+      z: -1.436
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 1.31
+  category: vehicle
+  id: 20
+- box3d:
+    dimension:
+      height: 1.561
+      length: 4.434
+      width: 2.001
+    location:
+      x: 1.594
+      y: 20.286
+      z: 0.37
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 2.164
+  category: vehicle
+  id: 21
+- box3d:
+    dimension:
+      height: 1.624
+      length: 4.687
+      width: 2.054
+    location:
+      x: 34.427
+      y: -32.243
+      z: -1.969
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: -0.42100000000000004
+  category: vehicle
+  id: 22
+- box3d:
+    dimension:
+      height: 1.75
+      length: 4.75
+      width: 1.95
+    location:
+      x: -17.513933958538104
+      y: 0.18730068754090118
+      z: -1.4456998170647044
+    orientation:
+      x_rotation: 0.0
+      y_rotation: 0.0
+      z_rotation: 0.0
+  category: vehicle
+  id: 23
+name: '1692390029096385292'
+timestamp: 0

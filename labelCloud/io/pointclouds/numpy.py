@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class NumpyHandler(BasePointCloudHandler):
-    EXTENSIONS = {".bin"}
+    EXTENSIONS = {".bin",".txt"}
 
     def __init__(self) -> None:
         super().__init__()
@@ -20,8 +20,11 @@ class NumpyHandler(BasePointCloudHandler):
     def read_point_cloud(self, path: Path) -> Tuple[npt.NDArray, None]:
         """Read point cloud file as array and drop reflection and nan values."""
         super().read_point_cloud(path)
-        points = np.fromfile(path, dtype=np.float32)
-        points = points.reshape((-1, 4 if len(points) % 4 == 0 else 3))[:, 0:3]
+        #points = np.fromfile(path, dtype=np.float32)    
+        #points = points.reshape((-1, 4 if len(points) % 4 == 0 else 3))[:, 0:3]
+        points = np.loadtxt(path) # LXH
+        points = points[:,0:3].astype(np.float32) #LXH
+        #points[:,0] *= -1
         return (points[~np.isnan(points).any(axis=1)], None)
 
     def write_point_cloud(self, path: Path, pointcloud: "PointCloud") -> None:

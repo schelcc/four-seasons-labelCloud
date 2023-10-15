@@ -9,6 +9,7 @@ from ..definitions import Mode, Point3D
 from ..definitions.types import Point3D
 from ..model import BBox
 from ..utils import oglhelper as ogl
+from ..io.labels.config import LabelConfig
 
 if TYPE_CHECKING:
     from ..view.gui import GUI
@@ -40,16 +41,13 @@ class PickingStrategy(BaseLabelingStrategy):
 
     def draw_preview(self) -> None:  # TODO: Refactor
         if self.tmp_p1:
-            tmp_bbox = BBox(
-                *np.add(
-                    self.tmp_p1,
-                    [
-                        0,
-                        config.getfloat("LABEL", "STD_BOUNDINGBOX_WIDTH") / 2,
-                        -config.getfloat("LABEL", "STD_BOUNDINGBOX_HEIGHT") / 3,
-                    ],
-                )
-            )
+            current_label = self.view.current_class_dropdown.currentText()
+            dimension = (2,2,2)
+            for label_class in LabelConfig().classes:
+                if current_label==label_class.name:
+                    dimension = label_class.dimension
+            tmp_bbox = BBox(self.tmp_p1[0],self.tmp_p1[1],self.tmp_p1[2],dimension[0],dimension[1],dimension[2]) 
+            tmp_bbox.set_classname(current_label)
             tmp_bbox.set_z_rotation(self.bbox_z_rotation)
             ogl.draw_cuboid(
                 tmp_bbox.get_vertices(), draw_vertices=True, vertex_color=(1, 1, 0, 1)
@@ -58,16 +56,14 @@ class PickingStrategy(BaseLabelingStrategy):
     # Draw bbox with fixed dimensions and rotation at x,y in world space
     def get_bbox(self) -> BBox:  # TODO: Refactor
         assert self.point_1 is not None
-        final_bbox = BBox(
-            *np.add(
-                self.point_1,
-                [
-                    0,
-                    config.getfloat("LABEL", "STD_BOUNDINGBOX_WIDTH") / 2,
-                    -config.getfloat("LABEL", "STD_BOUNDINGBOX_HEIGHT") / 3,
-                ],
-            )
-        )
+
+        current_label = self.view.current_class_dropdown.currentText()
+        dimension = (2,2,2)
+        for label_class in LabelConfig().classes:
+            if current_label==label_class.name:
+                dimension = label_class.dimension
+        final_bbox = BBox(self.tmp_p1[0],self.tmp_p1[1],self.tmp_p1[2],dimension[0],dimension[1],dimension[2]) 
+        final_bbox.set_classname(current_label)
         final_bbox.set_z_rotation(self.bbox_z_rotation)
         return final_bbox
 

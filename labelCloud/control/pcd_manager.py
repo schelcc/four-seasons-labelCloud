@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from shutil import copyfile
 from typing import TYPE_CHECKING, List, Optional, Set, Tuple
-
+import glob
 import numpy as np
 import open3d as o3d
 import pkg_resources
@@ -38,6 +38,7 @@ class PointCloudManger(object):
 
         self.view: GUI
         self.label_manager = LabelManager()
+        self.pcd_postfix = ''
 
         # Point cloud control
         self.pointcloud: Optional[PointCloud] = None
@@ -60,9 +61,17 @@ class PointCloudManger(object):
         """Checks point cloud folder and sets self.pcds to all valid point cloud file names."""
         if self.pcd_folder.is_dir():
             self.pcds = []
-            for file in sorted(self.pcd_folder.iterdir()):
-                if file.suffix in PointCloudManger.PCD_EXTENSIONS:
-                    self.pcds.append(file)
+            # LXH
+            if len(self.pcd_postfix):
+                l = len(self.pcd_postfix)                
+                pcd_list = glob.glob(str(self.pcd_folder.absolute())+'/*'+self.pcd_postfix)
+                pcd_list.sort()
+                for file in pcd_list:
+                    self.pcds.append(Path(file))
+            else:
+                for file in sorted(self.pcd_folder.iterdir()):
+                    if file.suffix in PointCloudManger.PCD_EXTENSIONS:
+                        self.pcds.append(file)
         else:
             logging.warning(
                 f"Point cloud path {self.pcd_folder} is not a valid directory."

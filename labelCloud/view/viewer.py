@@ -123,6 +123,7 @@ class GLWidget(QtOpenGL.QGLWidget):
 
         # Draw active bbox
         if self.bbox_controller.has_active_bbox():
+            bbox_center = self.bbox_controller.get_active_bbox().center
             self.bbox_controller.get_active_bbox().draw_bbox(highlighted=True)  # type: ignore
             if config.getboolean("USER_INTERFACE", "show_orientation"):
                 self.bbox_controller.get_active_bbox().draw_orientation()  # type: ignore

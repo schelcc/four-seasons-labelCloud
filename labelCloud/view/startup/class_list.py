@@ -36,8 +36,9 @@ class ClassList(QWidget):
         self.delete_buttons.buttonClicked.connect(self._delete_label)
 
         for class_label in LabelConfig().classes:
+            dimension = str(class_label.dimension)        
             self.add_label(
-                class_label.id, class_label.name, rgb_to_hex(class_label.color)
+                class_label.id, class_label.name, rgb_to_hex(class_label.color), dimension
             )
 
     @property
@@ -63,6 +64,7 @@ class ClassList(QWidget):
         id: Optional[int] = None,
         name: Optional[str] = None,
         hex_color: Optional[str] = None,
+        dimension: Optional[str] = None,
     ) -> None:
         if id is None:
             id = self.next_label_id
@@ -83,9 +85,12 @@ class ClassList(QWidget):
         row_label.addWidget(label_id)
 
         label_name = QLineEdit(name)
-        row_label.addWidget(label_name, stretch=2)
-
+        row_label.addWidget(label_name, stretch=1)
         label_name.editingFinished.connect(self.changed.emit)
+
+        label_dimension = QLineEdit(dimension)
+        row_label.addWidget(label_dimension, stretch=1)
+        label_dimension.editingFinished.connect(self.changed.emit)
 
         label_color = ColorButton(color=hex_color)
         row_label.addWidget(label_color)
@@ -125,10 +130,13 @@ class ClassList(QWidget):
         row: QHBoxLayout = self.class_labels.itemAt(row_id)  # type: ignore
 
         class_id = int(row.itemAt(0).widget().text())  # type: ignore
-        class_name = row.itemAt(1).widget().text()  # type: ignore
-        class_color = hex_to_rgb(row.itemAt(2).widget().color())  # type: ignore
+        class_name = row.itemAt(1).widget().text()  # type: ignore                
+        class_dimension = row.itemAt(2).widget().text()  # type: ignore  
+        class_dimension = class_dimension[1:-1].split(',')
+        l, w, h = float(class_dimension[0]), float(class_dimension[1]), float(class_dimension[2])
+        class_color = hex_to_rgb(row.itemAt(3).widget().color())  # type: ignore
 
-        return ClassConfig(id=class_id, name=class_name, color=class_color)
+        return ClassConfig(id=class_id, name=class_name, color=class_color, dimension=(l,w,h))
 
     def get_class_configs(self) -> List[ClassConfig]:
         classes = []
