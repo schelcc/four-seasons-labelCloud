@@ -17,6 +17,9 @@
 !labels/schema/label_definition.json
 !labels/segmentation/exemplary.bin
 
+pointclouds/
+labels/
+
 # ---------------------------------------------------------------------------- #
 #                                   GENERATED                                  #
 # ---------------------------------------------------------------------------- #

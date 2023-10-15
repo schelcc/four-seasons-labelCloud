@@ -517,37 +517,40 @@ class GUI(QtWidgets.QMainWindow):
                                 [1,-1,1]]).astype(np.float64)
             
             bbox = self.controller.bbox_controller.get_active_bbox()
-            corners[:,0] *= bbox.length/2.0
-            corners[:,1] *= bbox.width/2.0
-            corners[:,2] *= bbox.height/2.0
-            angle = bbox.z_rotation/180.0*np.pi
-            Rz = np.array([[np.cos(angle),-np.sin(angle),0],[np.sin(angle),np.cos(angle),0],[0,0,1]])
-            corners = np.transpose(np.matmul(Rz, np.transpose(corners, (1,0))), (1,0))   
-            corners[:,0] += bbox.center[0]
-            corners[:,1] += bbox.center[1]
-            corners[:,2] += bbox.center[2]       
-            pts_homo = np.ones((corners.shape[0], 4))
-            pts_homo[:,0:3] = corners   
 
-            #     
-            P = P_matrix[i]
-            pts_img = np.matmul(P, pts_homo.transpose()).transpose()
-            pts_img[:,0] /= pts_img[:,2]
-            pts_img[:,1] /= pts_img[:,2]    
-            x = pts_img[:,0]
-            y = pts_img[:,1]
+            # Only draw if there are bbox(es)
+            if bbox is not None:
+                corners[:,0] *= bbox.length/2.0
+                corners[:,1] *= bbox.width/2.0
+                corners[:,2] *= bbox.height/2.0
+                angle = bbox.z_rotation/180.0*np.pi
+                Rz = np.array([[np.cos(angle),-np.sin(angle),0],[np.sin(angle),np.cos(angle),0],[0,0,1]])
+                corners = np.transpose(np.matmul(Rz, np.transpose(corners, (1,0))), (1,0))   
+                corners[:,0] += bbox.center[0]
+                corners[:,1] += bbox.center[1]
+                corners[:,2] += bbox.center[2]       
+                pts_homo = np.ones((corners.shape[0], 4))
+                pts_homo[:,0:3] = corners   
 
-            x_mean = np.mean(x)
-            y_mean = np.mean(y)
-            if not (x_mean<-margin or x_mean>width+margin or y_mean<-margin or y_mean>height+margin):
-                painter = QPainter(pixelmap)
-                painter.setPen(QPen(QtCore.Qt.red, 1, QtCore.Qt.DashLine))
-                for m in range(4):
-                    n = (m+1)%4
-                    painter.drawLine(x[m],y[m],x[n],y[n])
-                    painter.drawLine(x[m+4],y[m+4],x[n+4],y[n+4])
-                    painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
-                painter.end()
+                #     
+                P = P_matrix[i]
+                pts_img = np.matmul(P, pts_homo.transpose()).transpose()
+                pts_img[:,0] /= pts_img[:,2]
+                pts_img[:,1] /= pts_img[:,2]    
+                x = pts_img[:,0]
+                y = pts_img[:,1]
+
+                x_mean = np.mean(x)
+                y_mean = np.mean(y)
+                if not (x_mean<-margin or x_mean>width+margin or y_mean<-margin or y_mean>height+margin):
+                    painter = QPainter(pixelmap)
+                    painter.setPen(QPen(QtCore.Qt.red, 1, QtCore.Qt.DashLine))
+                    for m in range(4):
+                        n = (m+1)%4
+                        painter.drawLine(x[m],y[m],x[n],y[n])
+                        painter.drawLine(x[m+4],y[m+4],x[n+4],y[n+4])
+                        painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
+                    painter.end()
 
             self.imageLabelList[i].setPixmap(pixelmap)
             self.imageLabelList[i].update()                     
