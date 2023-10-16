@@ -480,7 +480,6 @@ class GUI(QtWidgets.QMainWindow):
 
     def show_2d_image(self):
         """Searches for a 2D image with the point cloud name and displays it in a new window."""
-        #image_folder = config.getpath("FILE", "image_folder")
 
         # Look for image files with the name of the point cloud
         if not len(self.controller.pcd_manager.pcds):
@@ -499,6 +498,7 @@ class GUI(QtWidgets.QMainWindow):
         P_matrix = config.getlist("FILE", "pmatrix_list")
         P_matrix = np.array(P_matrix).reshape(-1,3,4)
         margin = 100
+        
         for i in range(len(self.cam_list)):
             image_path = str(self.controller.pcd_manager.pcd_folder.absolute())+'/'+file_name+self.cam_list[i]
             image = QtGui.QImage(QtGui.QImageReader(str(image_path)).read())
@@ -516,10 +516,20 @@ class GUI(QtWidgets.QMainWindow):
                                 [1,1,1],
                                 [1,-1,1]]).astype(np.float64)
             
-            bbox = self.controller.bbox_controller.get_active_bbox()
+            all_bboxes = self.controller.bbox_controller.bboxes
+            
+            active_bbox_idx = self.controller.bbox_controller.active_bbox_id
 
-            # Only draw if there are bbox(es)
-            if bbox is not None:
+            # Draw all bboxes in red
+            for idx, bbox in enumerate(all_bboxes):
+                thickness = 1
+                color = QtCore.Qt.blue
+                
+                if self.controller.bbox_controller.has_active_bbox and \
+                    idx == self.controller.bbox_controller.active_bbox_id:
+                        thickness = 3
+                        color = QtCore.Qt.green
+                
                 corners[:,0] *= bbox.length/2.0
                 corners[:,1] *= bbox.width/2.0
                 corners[:,2] *= bbox.height/2.0
@@ -544,13 +554,47 @@ class GUI(QtWidgets.QMainWindow):
                 y_mean = np.mean(y)
                 if not (x_mean<-margin or x_mean>width+margin or y_mean<-margin or y_mean>height+margin):
                     painter = QPainter(pixelmap)
-                    painter.setPen(QPen(QtCore.Qt.red, 1, QtCore.Qt.DashLine))
+                    painter.setPen(QPen(color, thickness, QtCore.Qt.DashLine))
                     for m in range(4):
                         n = (m+1)%4
                         painter.drawLine(x[m],y[m],x[n],y[n])
                         painter.drawLine(x[m+4],y[m+4],x[n+4],y[n+4])
                         painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
                     painter.end()
+                
+            # If there's an active bbox, draw it in green
+            # if active_bbox is not None:
+            #     corners[:,0] *= active_bbox.length/2.0
+            #     corners[:,1] *= active_bbox.width/2.0
+            #     corners[:,2] *= active_bbox.height/2.0
+            #     angle = active_bbox.z_rotation/180.0*np.pi
+            #     Rz = np.array([[np.cos(angle),-np.sin(angle),0],[np.sin(angle),np.cos(angle),0],[0,0,1]])
+            #     corners = np.transpose(np.matmul(Rz, np.transpose(corners, (1,0))), (1,0))   
+            #     corners[:,0] += active_bbox.center[0]
+            #     corners[:,1] += active_bbox.center[1]
+            #     corners[:,2] += active_bbox.center[2]       
+            #     pts_homo = np.ones((corners.shape[0], 4))
+            #     pts_homo[:,0:3] = corners   
+
+            #     #     
+            #     P = P_matrix[i]
+            #     pts_img = np.matmul(P, pts_homo.transpose()).transpose()
+            #     pts_img[:,0] /= pts_img[:,2]
+            #     pts_img[:,1] /= pts_img[:,2]    
+            #     x = pts_img[:,0]
+            #     y = pts_img[:,1]
+
+            #     x_mean = np.mean(x)
+            #     y_mean = np.mean(y)
+            #     if not (x_mean<-margin or x_mean>width+margin or y_mean<-margin or y_mean>height+margin):
+            #         painter = QPainter(pixelmap)
+            #         painter.setPen(QPen(QtCore.Qt.green, 2, QtCore.Qt.SolidLine))
+            #         for m in range(4):
+            #             n = (m+1)%4
+            #             painter.drawLine(x[m],y[m],x[n],y[n])
+            #             painter.drawLine(x[m+4],y[m+4],x[n+4],y[n+4])
+            #             painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
+            #         painter.end()
 
             self.imageLabelList[i].setPixmap(pixelmap)
             self.imageLabelList[i].update()                     
