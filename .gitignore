@@ -17,8 +17,10 @@
 !labels/schema/label_definition.json
 !labels/segmentation/exemplary.bin
 
-pointclouds/
-labels/
+pointclouds/*
+labels/*
+
+!pointclouds/_classes.json
 
 # ---------------------------------------------------------------------------- #
 #                                   GENERATED                                  #
