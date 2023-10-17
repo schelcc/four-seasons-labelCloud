@@ -145,11 +145,12 @@ class GUI(QtWidgets.QMainWindow):
         self.imageLabelList = []
         self.images_parent = QtWidgets.QWidget()
         self.image_layout = QtWidgets.QHBoxLayout(self.images_parent)
+
         for i in range(len(self.cam_list)):
             imageLabel = QLabel()
             imageLabel.setWindowTitle(f"2D Image ({self.cam_list[i]})")
+            imageLabel.setScaledContents(True)
             self.imageLabelList.append(imageLabel)
-            
         for img_label in self.imageLabelList:
             self.image_layout.addWidget(img_label)
 
@@ -517,22 +518,26 @@ class GUI(QtWidgets.QMainWindow):
             width, height = 1024, 768
 
             # draw active bbox to the image
-            corners = np.array([[-1,-1,-1],
-                                [-1,1,-1],
-                                [-1,1,1],
-                                [-1,-1,1],
-                                [1,-1,-1],
-                                [1,1,-1],
-                                [1,1,1],
-                                [1,-1,1]]).astype(np.float64)
+
             
             all_bboxes = self.controller.bbox_controller.bboxes
             active_bbox_idx = self.controller.bbox_controller.active_bbox_id
 
             # Draw all bboxes in red
             for idx, bbox in enumerate(all_bboxes):
-                thickness = 1
+                corners = np.array([[-1,-1,-1],
+                    [-1,1,-1],
+                    [-1,1,1],
+                    [-1,-1,1],
+                    [1,-1,-1],
+                    [1,1,-1],
+                    [1,1,1],
+                    [1,-1,1]]).astype(np.float64)
+                
+                thickness = 2
                 color = QtCore.Qt.blue
+                
+                print(f"{idx} : {bbox.get_dimensions()}")
                 
                 if self.controller.bbox_controller.has_active_bbox and \
                     idx == self.controller.bbox_controller.active_bbox_id:
@@ -549,7 +554,7 @@ class GUI(QtWidgets.QMainWindow):
                 corners[:,1] += bbox.center[1]
                 corners[:,2] += bbox.center[2]
                 pts_homo = np.ones((corners.shape[0], 4))
-                pts_homo[:,0:3] = corners   
+                pts_homo[:,0:3] = corners
                 P = P_matrix[i]
                 pts_img = np.matmul(P, pts_homo.transpose()).transpose()
                 pts_img[:,0] /= pts_img[:,2]
@@ -570,7 +575,7 @@ class GUI(QtWidgets.QMainWindow):
                     painter.end()
             
             # Scale down the image size
-            pixelmap = pixelmap.transformed(QtGui.QTransform().scale(0.75, 0.75))
+            pixelmap = pixelmap.transformed(QtGui.QTransform().scale(0.50, 0.50))
             
             
             self.imageLabelList[i].setPixmap(pixelmap)
