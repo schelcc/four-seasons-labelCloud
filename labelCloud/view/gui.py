@@ -143,10 +143,15 @@ class GUI(QtWidgets.QMainWindow):
         self.bbox_previous = None
         self.cam_list = config.getlist("FILE", "image_list")
         self.imageLabelList = []
+        self.images_parent = QtWidgets.QWidget()
+        self.image_layout = QtWidgets.QHBoxLayout(self.images_parent)
         for i in range(len(self.cam_list)):
             imageLabel = QLabel()
             imageLabel.setWindowTitle(f"2D Image ({self.cam_list[i]})")
             self.imageLabelList.append(imageLabel)
+            
+        for img_label in self.imageLabelList:
+            self.image_layout.addWidget(img_label)
 
         # MENU BAR
         # File
@@ -506,6 +511,9 @@ class GUI(QtWidgets.QMainWindow):
             pixelmap = pixelmap.scaledToWidth(1024)
             if self.cam_list[i] == '_top_mid_dd.png': # flip mid img
                 pixelmap = pixelmap.transformed(QtGui.QTransform().rotate(180.0))
+                # TODO - figure out if anything needs to be done to the pmatrix after flipping the image
+                #           - the bboxes were oriented incorrectly before flipping, and seem to be correct afterwards
+                
             width, height = 1024, 768
 
             # draw active bbox to the image
@@ -560,9 +568,17 @@ class GUI(QtWidgets.QMainWindow):
                         painter.drawLine(x[m+4],y[m+4],x[n+4],y[n+4])
                         painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
                     painter.end()
+            
+            # Scale down the image size
+            pixelmap = pixelmap.transformed(QtGui.QTransform().scale(0.75, 0.75))
+            
+            
             self.imageLabelList[i].setPixmap(pixelmap)
             self.imageLabelList[i].update()                     
-            self.imageLabelList[i].show()
+            
+        self.image_layout.update()
+        self.images_parent.update()
+        self.images_parent.show()
 
     def show_no_pointcloud_dialog(
         self, pcd_folder: Path, pcd_extensions: Set[str]
