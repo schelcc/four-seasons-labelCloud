@@ -525,8 +525,7 @@ class GUI(QtWidgets.QMainWindow):
 
             # Draw all bboxes in red
             for idx, bbox in enumerate(all_bboxes):
-                if bbox.center[0] > 0:
-                    continue
+
                 corners = np.array([[-1,-1,-1],
                     [-1,1,-1],
                     [-1,1,1],
@@ -539,7 +538,7 @@ class GUI(QtWidgets.QMainWindow):
                 thickness = 2
                 color = QtCore.Qt.blue
                 
-                print(f"{idx} : ({bbox.center})")
+                # print(f"{idx} : ({bbox.center})")
                 
                 if self.controller.bbox_controller.has_active_bbox and \
                     idx == self.controller.bbox_controller.active_bbox_id:
@@ -558,7 +557,11 @@ class GUI(QtWidgets.QMainWindow):
                 pts_homo = np.ones((corners.shape[0], 4))
                 pts_homo[:,0:3] = corners
                 P = P_matrix[i]
+                # if np.any(corners[:, 0] > -0.5):
+                #     continue
                 pts_img = np.matmul(P, pts_homo.transpose()).transpose()
+                if np.any(pts_img[:, 2] < 0):
+                    continue
                 pts_img[:,0] /= pts_img[:,2]
                 pts_img[:,1] /= pts_img[:,2]   
                 x = pts_img[:,0]
