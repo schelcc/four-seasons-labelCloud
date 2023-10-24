@@ -525,6 +525,8 @@ class GUI(QtWidgets.QMainWindow):
 
             # Draw all bboxes in red
             for idx, bbox in enumerate(all_bboxes):
+                if bbox.center[0] > 0:
+                    continue
                 corners = np.array([[-1,-1,-1],
                     [-1,1,-1],
                     [-1,1,1],
@@ -537,7 +539,7 @@ class GUI(QtWidgets.QMainWindow):
                 thickness = 2
                 color = QtCore.Qt.blue
                 
-                print(f"{idx} : {bbox.get_dimensions()}")
+                print(f"{idx} : ({bbox.center})")
                 
                 if self.controller.bbox_controller.has_active_bbox and \
                     idx == self.controller.bbox_controller.active_bbox_id:
