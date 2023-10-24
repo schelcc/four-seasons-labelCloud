@@ -510,8 +510,8 @@ class GUI(QtWidgets.QMainWindow):
             image = QtGui.QImage(QtGui.QImageReader(str(image_path)).read())
             pixelmap = QPixmap.fromImage(image)
             pixelmap = pixelmap.scaledToWidth(1024)
-            if self.cam_list[i] == '_top_mid_dd.png': # flip mid img
-                pixelmap = pixelmap.transformed(QtGui.QTransform().rotate(180.0))
+            # if self.cam_list[i] == '_top_mid_dd.png': # flip mid img
+                #pixelmap = pixelmap.transformed(QtGui.QTransform().rotate(180.0))
                 # TODO - figure out if anything needs to be done to the pmatrix after flipping the image
                 #           - the bboxes were oriented incorrectly before flipping, and seem to be correct afterwards
                 
@@ -525,6 +525,10 @@ class GUI(QtWidgets.QMainWindow):
 
             # Draw all bboxes in red
             for idx, bbox in enumerate(all_bboxes):
+                # Skip bboxes behind camera 
+                if bbox.center[2] < 0:
+                    continue
+                
                 corners = np.array([[-1,-1,-1],
                     [-1,1,-1],
                     [-1,1,1],
