@@ -525,10 +525,6 @@ class GUI(QtWidgets.QMainWindow):
 
             # Draw all bboxes in red
             for idx, bbox in enumerate(all_bboxes):
-                # Skip bboxes behind camera 
-                if bbox.center[2] < 0:
-                    continue
-                
                 corners = np.array([[-1,-1,-1],
                     [-1,1,-1],
                     [-1,1,1],
