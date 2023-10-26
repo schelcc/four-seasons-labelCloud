@@ -313,18 +313,25 @@ class PointCloud(object):
     def set_gl_background(self) -> None:
         GL.glTranslate(
             self.trans_x, self.trans_y, self.trans_z
-        )  # third, pcd translation
+        )  # third, pcd translation -7.46, -6.26, -1.06
 
         pcd_center = np.add(
             self.pcd_mins, (np.subtract(self.pcd_maxs, self.pcd_mins) / 2)
         )
         GL.glTranslate(*pcd_center)  # move point cloud back
 
+        GL.glColor3f(0, 255, 255)
+        GL.glPointSize(10)
+        GL.glBegin(GL.GL_POINTS)
+        GL.glVertex3fv((0., 0., 0.))
+        GL.glEnd()
+
         GL.glRotate(self.rot_x, 1.0, 0.0, 0.0)
         GL.glRotate(self.rot_y, 0.0, 1.0, 0.0)  # second, pcd rotation
         GL.glRotate(self.rot_z, 0.0, 0.0, 1.0)
 
         GL.glTranslate(*(pcd_center * -1))  # move point cloud to center for rotation
+        
         GL.glPointSize(self.point_size)
 
     def draw_pointcloud(self) -> None:
