@@ -77,6 +77,8 @@ class PointCloud(object):
         # Point cloud transformations
         self.trans_x, self.trans_y, self.trans_z = self.init_translation
         self.rot_x, self.rot_y, self.rot_z = self.init_rotation
+        
+        self.focus = None
 
         if self.colorless:
             # if no color in point cloud, either color with height or color with a single color
@@ -309,16 +311,23 @@ class PointCloud(object):
         self.trans_x = x
         self.trans_y = y
         self.trans_z = z
+        
+    def set_focus(self, focus):
+        self.focus = focus
+        
+    def unset_focus(self):
+        self.focus = None
 
     def set_gl_background(self) -> None:
+        
         GL.glTranslate(
             self.trans_x, self.trans_y, self.trans_z
         )  # third, pcd translation -7.46, -6.26, -1.06
 
-        pcd_center = np.add(
-            self.pcd_mins, (np.subtract(self.pcd_maxs, self.pcd_mins) / 2)
-        )
-        GL.glTranslate(*pcd_center)  # move point cloud back
+        # pcd_center = np.add(
+        #     self.pcd_mins, (np.subtract(self.pcd_maxs, self.pcd_mins) / 2)
+        # )
+        # GL.glTranslate(*pcd_center)  # move point cloud back
 
         # Draw a blue dot at the rotation origin
         GL.glColor3f(0, 255, 255)
@@ -330,11 +339,12 @@ class PointCloud(object):
         GL.glRotate(self.rot_x, 1.0, 0.0, 0.0)
         GL.glRotate(self.rot_y, 0.0, 1.0, 0.0)  # second, pcd rotation
         GL.glRotate(self.rot_z, 0.0, 0.0, 1.0)
-
-        GL.glTranslate(*(pcd_center * -1))  # move point cloud to center for rotation
-    
-        ## Draw arrow showing car's orientation
         
+        
+
+        if self.focus is not None:
+            GL.glTranslate(-self.focus[0], -self.focus[1], -self.focus[2])
+            
         # Get object coordinates for arrow
         center = np.array([0., 0., 0.])
         end = np.array([2, 2, 2])
@@ -370,14 +380,16 @@ class PointCloud(object):
         GL.glVertex3fv(second_edge)
         GL.glVertex3fv(bp2)
         GL.glVertex3fv(third_edge)
-        # if crossed_side:
-        #     GL.glVertex3fv(self.verticies[BBOX_SIDES["right"][0]])
-        #     GL.glVertex3fv(self.verticies[BBOX_SIDES["right"][2]])
-        #     GL.glVertex3fv(self.verticies[BBOX_SIDES["right"][1]])
-        #     GL.glVertex3fv(self.verticies[BBOX_SIDES["right"][3]])
+
         GL.glEnd()
         GL.glLineWidth(1)
         GL.glPopMatrix()
+        
+        GL.glColor3f(0, 255, 0)
+        GL.glPointSize(10)
+        GL.glBegin(GL.GL_POINTS)
+        GL.glVertex3fv((0., 0., 0.))
+        GL.glEnd()
         
         GL.glPointSize(self.point_size)
 

@@ -315,6 +315,10 @@ class Controller:
         elif a0.key() == Keys.Key_E:
             # move down
             self.bbox_controller.translate_along_z(down=True)
+        elif a0.key() == Keys.Key_L:
+            # lock on to current bbox
+            self.pcd_manager.move_focus(self.bbox_controller.get_active_bbox().center)
+            # self.pcd_manager.reset_transformations()
         elif a0.key() in [Keys.Key_R, Keys.Key_Left]:
             # load previous sample
             self.prev_pcd()
