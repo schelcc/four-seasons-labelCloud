@@ -320,6 +320,7 @@ class PointCloud(object):
         )
         GL.glTranslate(*pcd_center)  # move point cloud back
 
+        # Draw a blue dot at the rotation origin
         GL.glColor3f(0, 255, 255)
         GL.glPointSize(10)
         GL.glBegin(GL.GL_POINTS)
@@ -331,6 +332,52 @@ class PointCloud(object):
         GL.glRotate(self.rot_z, 0.0, 0.0, 1.0)
 
         GL.glTranslate(*(pcd_center * -1))  # move point cloud to center for rotation
+    
+        ## Draw arrow showing car's orientation
+        
+        # Get object coordinates for arrow
+        center = np.array([0., 0., 0.])
+        end = np.array([2, 2, 2])
+        yaw = 180
+        pitch = 0
+        roll = 0
+        arrow_length = 3
+        bp2 = [arrow_length, 0, 0]
+        first_edge = [
+            arrow_length * 0.8,
+            arrow_length * 0.3,
+            0,
+        ]  # TODO: Refactor to OGL helper
+        second_edge = [arrow_length * 0.8, arrow_length * -0.3, 0]
+        third_edge = [arrow_length * 0.8, 0, arrow_length * 0.3]
+
+        GL.glPushMatrix()
+        GL.glLineWidth(10)
+
+        # Apply translation and rotation
+        GL.glTranslate(*center)
+
+        GL.glRotate(yaw, 0.0, 0.0, 1.0)
+        GL.glRotate(pitch, 0.0, 1.0, 0.0)
+        GL.glRotate(roll, 1.0, 0.0, 0.0)
+
+        GL.glBegin(GL.GL_LINES)
+        GL.glVertex3fv([0, 0, 0])
+        GL.glVertex3fv(bp2)
+        GL.glVertex3fv(bp2)
+        GL.glVertex3fv(first_edge)
+        GL.glVertex3fv(bp2)
+        GL.glVertex3fv(second_edge)
+        GL.glVertex3fv(bp2)
+        GL.glVertex3fv(third_edge)
+        # if crossed_side:
+        #     GL.glVertex3fv(self.verticies[BBOX_SIDES["right"][0]])
+        #     GL.glVertex3fv(self.verticies[BBOX_SIDES["right"][2]])
+        #     GL.glVertex3fv(self.verticies[BBOX_SIDES["right"][1]])
+        #     GL.glVertex3fv(self.verticies[BBOX_SIDES["right"][3]])
+        GL.glEnd()
+        GL.glLineWidth(1)
+        GL.glPopMatrix()
         
         GL.glPointSize(self.point_size)
 
