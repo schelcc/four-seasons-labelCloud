@@ -250,6 +250,8 @@ class Controller:
     def key_press_event(self, a0: QtGui.QKeyEvent) -> None:
         """Triggers actions when the user presses a key."""
 
+        # print(a0.key())
+
         # Reset position to intial value
         if a0.key() == Keys.Key_Control:
             self.ctrl_pressed = True
@@ -277,6 +279,7 @@ class Controller:
             elif self.align_mode.is_active:
                 self.align_mode.reset()
                 logging.info("Resetted selected points!")
+
 
         # BBOX MANIPULATION
         elif a0.key() == Keys.Key_Z:
@@ -315,9 +318,12 @@ class Controller:
         elif a0.key() == Keys.Key_E:
             # move down
             self.bbox_controller.translate_along_z(down=True)
-        elif a0.key() == Keys.Key_L:
+        elif a0.key() == Keys.Key_Alt:
+            # Unset focus
+            self.pcd_manager.stop_focus()
+        elif a0.key() in [Keys.Key_L, Keys.Key_Super_L, Keys.Key_Super_R]:
             # lock on to current bbox
-            self.pcd_manager.move_focus(self.bbox_controller.get_active_bbox().center)
+            self.pcd_manager.move_focus(self.bbox_controller.get_active_bbox().center, force=True)
             # self.pcd_manager.reset_transformations()
         elif a0.key() in [Keys.Key_R, Keys.Key_Left]:
             # load previous sample

@@ -128,6 +128,9 @@ class GLWidget(QtOpenGL.QGLWidget):
             if config.getboolean("USER_INTERFACE", "show_orientation"):
                 self.bbox_controller.get_active_bbox().draw_orientation()  # type: ignore
 
+        else:
+            self.pcd_manager.stop_focus()
+
         # Draw labeled bboxes
         for bbox in self.bbox_controller.bboxes:  # type: ignore
             bbox.draw_bbox()

@@ -228,11 +228,12 @@ class PointCloudManger(object):
         self.reset_translation()
         self.reset_rotation()
 
-    def move_focus(self, focus):
-        self.pointcloud.trans_x = 0
-        self.pointcloud.trans_y = 0
-        self.pointcloud.set_focus(focus)
-        
+    def move_focus(self, focus, force=False):
+        if self.pointcloud.focus is None or force:
+            self.pointcloud.trans_x = 0
+            self.pointcloud.trans_y = 0
+            self.pointcloud.set_focus(focus)
+            
     def stop_focus(self):
         self.pointcloud.unset_focus()
 
