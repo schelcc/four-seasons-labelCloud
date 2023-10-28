@@ -444,6 +444,9 @@ class GUI(QtWidgets.QMainWindow):
             self,
             self.label_list,  # otherwise steals focus for keyboard shortcuts
         ]:
+            # Not sure how to hand this to controller so it's going here
+            if event.key() == QtCore.Qt.Key_QuoteLeft:
+                self.controller.drawing_mode.set_drawing_strategy(PickingStrategy(self))
             self.controller.key_press_event(event)
             self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
             return True  # TODO: Recheck pyqt behaviour
