@@ -13,6 +13,7 @@ from ..definitions import BBOX_SIDES, Colors, Context, LabelingMode
 from ..io.labels.config import LabelConfig
 from ..utils import oglhelper
 from ..view.gui import GUI
+from ..labeling_strategies import PickingStrategy
 from .alignmode import AlignMode
 from .bbox_controller import BoundingBoxController
 from .config_manager import config
@@ -21,7 +22,7 @@ from .pcd_manager import PointCloudManger
 
 
 class Controller:
-    MOVEMENT_THRESHOLD = 0.1
+    MOVEMENT_THRESHOLD = 0.05
 
     def __init__(self) -> None:
         """Initializes all controllers and managers."""
@@ -323,7 +324,8 @@ class Controller:
             self.pcd_manager.stop_focus()
         elif a0.key() in [Keys.Key_L, Keys.Key_Super_L, Keys.Key_Super_R]:
             # lock on to current bbox
-            self.pcd_manager.move_focus(self.bbox_controller.get_active_bbox().center, force=True)
+            if self.bbox_controller.has_active_bbox():
+                self.pcd_manager.move_focus(self.bbox_controller.get_active_bbox().center, force=True)
             # self.pcd_manager.reset_transformations()
         elif a0.key() in [Keys.Key_R, Keys.Key_Left]:
             # load previous sample
