@@ -2,6 +2,7 @@ import logging
 from typing import TYPE_CHECKING, Union
 
 from ..labeling_strategies import BaseLabelingStrategy
+from ..proj_correction_strategies import BaseProjCorrection
 from .bbox_controller import BoundingBoxController
 
 if TYPE_CHECKING:
@@ -12,7 +13,7 @@ class DrawingManager(object):
     def __init__(self, bbox_controller: BoundingBoxController) -> None:
         self.view: "GUI"
         self.bbox_controller = bbox_controller
-        self.drawing_strategy: Union[BaseLabelingStrategy, None] = None
+        self.drawing_strategy: Union[BaseLabelingStrategy, BaseProjCorrection, None] = None
 
     def set_view(self, view: "GUI") -> None:
         self.view = view
@@ -20,7 +21,7 @@ class DrawingManager(object):
 
     def is_active(self) -> bool:
         return self.drawing_strategy is not None and isinstance(
-            self.drawing_strategy, BaseLabelingStrategy
+            self.drawing_strategy, (BaseLabelingStrategy, BaseProjCorrection)
         )
 
     def has_preview(self) -> bool:
@@ -28,7 +29,7 @@ class DrawingManager(object):
             return self.drawing_strategy.__class__.PREVIEW  # type: ignore
         return False
 
-    def set_drawing_strategy(self, strategy: BaseLabelingStrategy) -> None:
+    def set_drawing_strategy(self, strategy: Union[BaseProjCorrection, BaseLabelingStrategy]) -> None:
         if self.is_active() and self.drawing_strategy == strategy:
             self.reset()
             logging.info("Deactivated drawing!")
