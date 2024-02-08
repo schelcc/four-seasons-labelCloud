@@ -35,6 +35,7 @@ class SpanningStrategy(BaseLabelingStrategy):
         self.p1_w: Optional[Point3D] = None  # p1 + dir_vector
         self.p2_w: Optional[Point3D] = None  # p2 + dir_vector
         self.dir_vector: Optional[Point3D] = None  # p1 + dir_vector
+        self.last_pos = None
 
     def reset(self) -> None:
         super().reset()

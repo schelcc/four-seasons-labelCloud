@@ -332,11 +332,14 @@ class BoundingBoxController(object):
 
     @has_active_bbox_decorator
     def translate_along_x(
-        self, distance: Optional[float] = None, left: bool = False
+        self, distance: Optional[float] = None, left: bool = False, boost: bool = False
     ) -> None:
         distance = distance or config.getfloat("LABEL", "std_translation")
         if left:
             distance *= -1
+            
+        if boost:
+            distance *= config.getfloat("LABEL", "boost_multiplier")
 
         cosz, sinz, bu = self.pcd_manager.get_perspective()
 
@@ -346,11 +349,14 @@ class BoundingBoxController(object):
 
     @has_active_bbox_decorator
     def translate_along_y(
-        self, distance: Optional[float] = None, forward: bool = False
+        self, distance: Optional[float] = None, forward: bool = False, boost: bool = False
     ) -> None:
         distance = distance or config.getfloat("LABEL", "std_translation")
         if forward:
             distance *= -1
+            
+        if boost:
+            distance *= config.getfloat("LABEL", "boost_multiplier")
 
         cosz, sinz, bu = self.pcd_manager.get_perspective()
 
@@ -360,11 +366,15 @@ class BoundingBoxController(object):
 
     @has_active_bbox_decorator
     def translate_along_z(
-        self, distance: Optional[float] = None, down: bool = False
+        self, distance: Optional[float] = None, down: bool = False, boost: bool = False
     ) -> None:
         distance = distance or config.getfloat("LABEL", "std_translation")
+        
         if down:
             distance *= -1
+
+        if boost:
+            distance *= config.getfloat("LABEL", "boost_multiplier")
 
         active_bbox: Bbox = self.get_active_bbox()  # type: ignore
         active_bbox.set_z_translation(active_bbox.center[2] + distance)

@@ -38,6 +38,7 @@ class Controller:
         self.curr_cursor_pos: Optional[QPoint] = None  # updated by mouse movement
         self.last_cursor_pos: Optional[QPoint] = None  # updated by mouse click
         self.ctrl_pressed = False
+        self.shift_pressed = False
         self.scroll_mode = False  # to enable the side-pulling
 
         # Correction states
@@ -237,9 +238,17 @@ class Controller:
         if (
             self.drawing_mode.is_active()
             and (not self.ctrl_pressed)
+            and (not self.shift_pressed)
             and self.drawing_mode.drawing_strategy is not None
         ):
             self.drawing_mode.drawing_strategy.register_scrolling(a0.angleDelta().y())
+        elif (
+            self.drawing_mode.is_active()
+            and (not self.ctrl_pressed)
+            and (self.shift_pressed)
+            and self.drawing_mode.drawing_strategy is not None
+        ):
+            self.drawing_mode.drawing_strategy.register_scale(a0.angleDelta().y())
         elif self.side_mode and self.bbox_controller.has_active_bbox():
             self.bbox_controller.get_active_bbox().change_side(  # type: ignore
                 self.selected_side, -a0.angleDelta().y() / 4000  # type: ignore
@@ -261,6 +270,8 @@ class Controller:
                 "the bounding box.",
                 context=Context.CONTROL_PRESSED,
             )
+        elif a0.key() == Keys.Key_Shift:
+            self.shift_pressed = True
         # Reset point cloud pose to intial rotation and translation
         elif a0.key() in [Keys.Key_P, Keys.Key_Home]:
             self.pcd_manager.reset_transformations()
@@ -301,24 +312,65 @@ class Controller:
         elif a0.key() == Keys.Key_N:
             # x rotate clockwise
             self.bbox_controller.rotate_around_x(clockwise=True)
-        elif a0.key() == Keys.Key_W:
+        #### DUAL EVENTS BASED ON PICKING
+        ### IS NOT DRAWING
+        elif a0.key() == Keys.Key_W and not self.drawing_mode.is_active():
             # move backward
-            self.bbox_controller.translate_along_y()
-        elif a0.key() == Keys.Key_S:
+            self.bbox_controller.translate_along_y(boost=self.shift_pressed)
+
+        elif a0.key() == Keys.Key_S and not self.drawing_mode.is_active():
             # move forward
-            self.bbox_controller.translate_along_y(forward=True)
-        elif a0.key() == Keys.Key_A:
+            self.bbox_controller.translate_along_y(forward=True, boost=self.shift_pressed)
+
+        elif a0.key() == Keys.Key_A and not self.drawing_mode.is_active():
             # move left
-            self.bbox_controller.translate_along_x(left=True)
-        elif a0.key() == Keys.Key_D:
+            self.bbox_controller.translate_along_x(left=True, boost=self.shift_pressed)
+
+        elif a0.key() == Keys.Key_D and not self.drawing_mode.is_active():
             # move right
-            self.bbox_controller.translate_along_x()
-        elif a0.key() == Keys.Key_Q:
+            self.bbox_controller.translate_along_x(boost=self.shift_pressed)
+
+        elif a0.key() == Keys.Key_Q and not self.drawing_mode.is_active():
             # move up
-            self.bbox_controller.translate_along_z()
-        elif a0.key() == Keys.Key_E:
+            self.bbox_controller.translate_along_z(boost=self.shift_pressed)
+
+        elif a0.key() == Keys.Key_E and not self.drawing_mode.is_active():
             # move down
-            self.bbox_controller.translate_along_z(down=True)
+            self.bbox_controller.translate_along_z(down=True, boost=self.shift_pressed)
+
+        ### IS DRAWING
+        elif a0.key() == Keys.Key_W and self.drawing_mode.is_active():
+            # move backward
+            # self.drawing_mode.drawing_strategy.register_translate_y
+            perspective = self.pcd_manager.get_perspective()
+            self.drawing_mode.drawing_strategy.register_trans_y(perspective, boost=self.shift_pressed)
+
+        elif a0.key() == Keys.Key_S and self.drawing_mode.is_active():
+            # move forward
+            perspective = self.pcd_manager.get_perspective()
+            self.drawing_mode.drawing_strategy.register_trans_y(perspective, forward=True, boost=self.shift_pressed)
+
+        elif a0.key() == Keys.Key_A and self.drawing_mode.is_active():
+            # move left
+            perspective = self.pcd_manager.get_perspective()
+            self.drawing_mode.drawing_strategy.register_trans_x(perspective, left=True, boost=self.shift_pressed)
+
+        elif a0.key() == Keys.Key_D and self.drawing_mode.is_active():
+            # move right
+            perspective = self.pcd_manager.get_perspective()
+            self.drawing_mode.drawing_strategy.register_trans_x(perspective, boost=self.shift_pressed)
+
+        elif a0.key() == Keys.Key_Q and self.drawing_mode.is_active():
+            # move up
+            perspective = self.pcd_manager.get_perspective()
+            self.drawing_mode.drawing_strategy.register_trans_z(boost=self.shift_pressed)
+
+        elif a0.key() == Keys.Key_E and self.drawing_mode.is_active():
+            # move down
+            perspective = self.pcd_manager.get_perspective()
+            self.drawing_mode.drawing_strategy.register_trans_z(down=True, boost=self.shift_pressed)
+
+        #### DUAL EVENTS BASED ON PICKING
         elif a0.key() == Keys.Key_Alt:
             # Unset focus
             self.pcd_manager.stop_focus()
@@ -372,6 +424,8 @@ class Controller:
         if a0.key() == Keys.Key_Control:
             self.ctrl_pressed = False
             self.view.status_manager.clear_message(Context.CONTROL_PRESSED)
+        elif a0.key() == Keys.Key_Shift:
+            self.shift_pressed = False
 
     def crop_pointcloud_inside_active_bbox(self) -> None:
         bbox = self.bbox_controller.get_active_bbox()

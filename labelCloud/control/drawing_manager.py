@@ -44,6 +44,7 @@ class DrawingManager(object):
     ) -> None:
         assert self.drawing_strategy is not None
         world_point = self.view.gl_widget.get_world_coords(x, y, correction=correction)
+        
 
         if is_temporary:
             self.drawing_strategy.register_tmp_point(world_point)

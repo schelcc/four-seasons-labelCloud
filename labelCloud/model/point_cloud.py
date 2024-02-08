@@ -74,6 +74,9 @@ class PointCloud(object):
         )
         self.init_rotation: Rotations3D = init_rotation or tuple([0, 0, 0])  # type: ignore
 
+        # For transformation correction, current selected point
+        self.selected_point : Optional[Point3D] = None
+        
         # Point cloud transformations
         self.trans_x, self.trans_y, self.trans_z = self.init_translation
         self.rot_x, self.rot_y, self.rot_z = self.init_rotation
