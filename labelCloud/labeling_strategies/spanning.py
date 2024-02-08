@@ -49,7 +49,7 @@ class SpanningStrategy(BaseLabelingStrategy):
         )
         self.view.button_span_bbox.setChecked(False)
 
-    def register_point(self, new_point: Point3D) -> None:
+    def register_point_3d(self, new_point: Point3D) -> None:
         if self.point_1 is None:
             self.point_1 = new_point
             self.view.status_manager.set_message(
@@ -71,7 +71,7 @@ class SpanningStrategy(BaseLabelingStrategy):
             logging.warning("Cannot register point.")
         self.points_registered += 1
 
-    def register_tmp_point(self, new_tmp_point: Point3D) -> None:
+    def register_tmp_point_3d(self, new_tmp_point: Point3D) -> None:
         if self.point_1 and (not self.point_2):
             self.tmp_p2 = new_tmp_point
         elif self.point_2 and (not self.point_3):

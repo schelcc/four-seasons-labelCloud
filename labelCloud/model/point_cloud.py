@@ -267,6 +267,17 @@ class PointCloud(object):
                 size=colors.nbytes,
                 data=colors,
             )
+    
+    def get_nearest_pcl_pt(self, approx_pt : Point3D) -> Optional[Point3D] :
+        """Given a value in 3D space, return the pointcloud's nearest point"""
+        output : Optional[Point3D] = None
+        
+        diff = np.absolute(self.points - approx_pt)
+        nearest_idx = np.argmin(diff)
+        output = self.points[nearest_idx]
+        
+        return output
+        
 
     # GETTERS AND SETTERS
     def get_no_of_points(self) -> int:
