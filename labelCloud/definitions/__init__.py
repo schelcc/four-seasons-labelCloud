@@ -4,6 +4,7 @@ from .context import Context
 from .label_formats import ObjectDetectionFormat, SemanticSegmentationFormat
 from .labeling_mode import LabelingMode
 from .mode import Mode
+from .cameras import Camera
 from .types import (
     Color3f,
     Color4f,
