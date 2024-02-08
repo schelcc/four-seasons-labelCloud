@@ -381,14 +381,6 @@ class PointCloud(object):
         GL.glVertex3fv((0., 0., 0.))
         GL.glEnd()
 
-        
-        # Draw the selected point
-        GL.glColor3f(0, 255, 0)
-        GL.glPointSize(10)
-        GL.glBegin(GL.GL_POINTS)
-        GL.glVertex3fv(self.selected_point)
-        GL.glEnd()
-
         # Rotate the pointcloud to the desired rotation
         GL.glRotate(self.rot_x, 1.0, 0.0, 0.0)
         GL.glRotate(self.rot_y, 0.0, 1.0, 0.0) 
