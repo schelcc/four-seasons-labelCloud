@@ -21,16 +21,10 @@ class BaseLabelingStrategy(ABC):
         return self.points_registered >= self.__class__.POINTS_NEEDED
 
     @abstractmethod
-    def register_point_3d(self, new_point: Point3D) -> None:
+    def register_point(self, new_point: Point3D) -> None:
         raise NotImplementedError
-    
-    def register_point_2d(self, new_point: Point2D) -> None:
-        pass
 
-    def register_tmp_point_3d(self, new_tmp_point: Point3D) -> None:
-        pass
-
-    def register_tmp_point_2d(self, new_tmp_point: Point2D) -> None:
+    def register_tmp_point(self, new_tmp_point: Point3D) -> None:
         pass
 
     def register_scrolling(self, distance: float) -> None:

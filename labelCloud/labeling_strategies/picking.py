@@ -31,14 +31,14 @@ class PickingStrategy(BaseLabelingStrategy):
         self.scale = 0
         self.bbox_z_rotation: float = 0
 
-    def register_point_3d(self, new_point: Point3D) -> None:
+    def register_point(self, new_point: Point3D) -> None:
         nx, ny, nz = new_point
         tx, ty, tz = self.trans
         
         self.point_1 = (nx + tx, ny + ty, nz + tz)
         self.points_registered += 1
 
-    def register_tmp_point_3d(self, new_tmp_point: Point3D) -> None:
+    def register_tmp_point(self, new_tmp_point: Point3D) -> None:
         self.tmp_p1 = new_tmp_point
 
     def register_scrolling(self, distance: float) -> None:
@@ -62,7 +62,7 @@ class PickingStrategy(BaseLabelingStrategy):
         
         self.trans = (tx, ty, tz)
 
-        # self.register_tmp_point_3d(self.tmp_p1)
+        # self.register_tmp_point(self.tmp_p1)
         
     def register_trans_x(self, perspective, left: bool = False, boost: bool = False):
         distance = config.getfloat("LABEL", "std_translation")
@@ -82,7 +82,7 @@ class PickingStrategy(BaseLabelingStrategy):
         
         self.trans = (tx, ty, tz)
 
-        # self.register_tmp_point_3d(self.tmp_p1)
+        # self.register_tmp_point(self.tmp_p1)
         
     def register_trans_z(self, down: bool = False, boost: bool = False):
         distance = config.getfloat("LABEL", "std_translation")
@@ -99,7 +99,7 @@ class PickingStrategy(BaseLabelingStrategy):
         
         self.trans = (tx, ty, tz)
 
-        # self.register_tmp_point_3d(self.tmp_p1)
+        # self.register_tmp_point(self.tmp_p1)
         
     def register_scale(self, distance):
         self.scale += (distance / 300)

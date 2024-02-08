@@ -167,7 +167,7 @@ class Controller:
             and (a0.buttons() & Keys.LeftButton)
             and (not self.ctrl_pressed)
         ):
-            self.drawing_mode.register_point_3d(a0.x(), a0.y(), correction=True)
+            self.drawing_mode.register_point(a0.x(), a0.y(), correction=True)
 
         elif self.align_mode.is_active and (not self.ctrl_pressed):
             self.align_mode.register_point(
@@ -187,7 +187,7 @@ class Controller:
 
         # Methods that use absolute cursor position
         if self.drawing_mode.is_active() and (not self.ctrl_pressed):
-            self.drawing_mode.register_point_3d(
+            self.drawing_mode.register_point(
                 a0.x(), a0.y(), correction=True, is_temporary=True
             )
 

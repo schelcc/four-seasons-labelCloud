@@ -39,7 +39,7 @@ class DrawingManager(object):
 
             self.drawing_strategy = strategy
 
-    def register_point_3d(
+    def register_point(
         self, x: float, y: float, correction: bool = False, is_temporary: bool = False
     ) -> None:
         assert self.drawing_strategy is not None
@@ -47,9 +47,9 @@ class DrawingManager(object):
         
 
         if is_temporary:
-            self.drawing_strategy.register_tmp_point_3d(world_point)
+            self.drawing_strategy.register_tmp_point(world_point)
         else:
-            self.drawing_strategy.register_point_3d(world_point)
+            self.drawing_strategy.register_point(world_point)
             if (
                 self.drawing_strategy.is_bbox_finished()
             ):  # Register bbox to bbox controller when finished

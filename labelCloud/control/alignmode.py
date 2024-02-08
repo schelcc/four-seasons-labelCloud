@@ -60,7 +60,7 @@ class AlignMode(object):
         if not points_only:
             self.change_activation(force=False)
 
-    def register_point_3d(self, new_point) -> None:
+    def register_point(self, new_point) -> None:
         if self.plane1 is None:
             self.plane1 = new_point
         elif not self.plane2:
