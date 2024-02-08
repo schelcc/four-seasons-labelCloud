@@ -280,6 +280,9 @@ class PointCloud(object):
 
     def get_translation(self) -> Translation3D:
         return self.trans_x, self.trans_y, self.trans_z
+    
+    def get_selected_point(self) -> Optional[Point3D]:
+        return self.selected_point
 
     def get_mins_maxs(self) -> Tuple[npt.NDArray, npt.NDArray]:
         return self.pcd_mins, self.pcd_maxs
@@ -318,36 +321,13 @@ class PointCloud(object):
     def set_focus(self, focus):
         self.focus = focus
         
+    def set_selected_point(self, new_point : Point3D):
+        self.selected_point = new_point
+        
     def unset_focus(self):
         self.focus = None
-
-    def set_gl_background(self) -> None:
         
-        GL.glTranslate(
-            self.trans_x, self.trans_y, self.trans_z
-        )  # third, pcd translation -7.46, -6.26, -1.06
-
-        # pcd_center = np.add(
-        #     self.pcd_mins, (np.subtract(self.pcd_maxs, self.pcd_mins) / 2)
-        # )
-        # GL.glTranslate(*pcd_center)  # move point cloud back
-
-        # Draw a blue dot at the rotation origin
-        GL.glColor3f(0, 255, 255)
-        GL.glPointSize(10)
-        GL.glBegin(GL.GL_POINTS)
-        GL.glVertex3fv((0., 0., 0.))
-        GL.glEnd()
-
-        GL.glRotate(self.rot_x, 1.0, 0.0, 0.0)
-        GL.glRotate(self.rot_y, 0.0, 1.0, 0.0)  # second, pcd rotation
-        GL.glRotate(self.rot_z, 0.0, 0.0, 1.0)
-        
-        
-
-        if self.focus is not None:
-            GL.glTranslate(-self.focus[0], -self.focus[1], -self.focus[2])
-            
+    def draw_orientation_arrow(self):
         # Get object coordinates for arrow
         center = np.array([0., 0., 0.])
         end = np.array([2, 2, 2])
@@ -366,7 +346,6 @@ class PointCloud(object):
 
         GL.glPushMatrix()
         GL.glLineWidth(10)
-
         # Apply translation and rotation
         GL.glTranslate(*center)
 
@@ -387,7 +366,33 @@ class PointCloud(object):
         GL.glEnd()
         GL.glLineWidth(1)
         GL.glPopMatrix()
+
+    def set_gl_background(self) -> None:
         
+        # Translate cloud to set translation
+        GL.glTranslate(
+            self.trans_x, self.trans_y, self.trans_z
+        )
+
+        # Draw a blue dot at the rotation origin
+        GL.glColor3f(0, 255, 255)
+        GL.glPointSize(10)
+        GL.glBegin(GL.GL_POINTS)
+        GL.glVertex3fv((0., 0., 0.))
+        GL.glEnd()
+
+        # Rotate the pointcloud to the desired rotation
+        GL.glRotate(self.rot_x, 1.0, 0.0, 0.0)
+        GL.glRotate(self.rot_y, 0.0, 1.0, 0.0) 
+        GL.glRotate(self.rot_z, 0.0, 0.0, 1.0)
+        
+        # TODO : Can't remember what this was for
+        if self.focus is not None:
+            GL.glTranslate(-self.focus[0], -self.focus[1], -self.focus[2])
+            
+        self.draw_orientation_arrow()
+        
+        # Draw rotation origin        
         GL.glColor3f(0, 255, 0)
         GL.glPointSize(10)
         GL.glBegin(GL.GL_POINTS)
