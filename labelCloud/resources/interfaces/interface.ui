@@ -710,7 +710,7 @@
             <enum>Qt::LeftToRight</enum>
             </property>
           <property name="text">
-            <string>Match 3D -> 2D</string>
+            <string>Match 3D - 2D</string>
           </property>
           <property name="icon">
             <iconset>

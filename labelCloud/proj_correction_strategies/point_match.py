@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class PointMatchCorrection(BaseProjCorrection):
     PREVIEW: bool = True
 
-    def __int__(self, view: "GUI") -> None:
+    def __init__(self, view: "GUI") -> None:
         super().__init__(view)
         logging.info("Enabled projection correction mode.")
         self.view.status_manager.update_status(
