@@ -240,6 +240,7 @@ class Controller:
             and (not self.ctrl_pressed)
             and (not self.shift_pressed)
             and self.drawing_mode.drawing_strategy is not None
+            and (not self.drawing_mode.drawing_strategy.IGNORE_SCROLL)
         ):
             self.drawing_mode.drawing_strategy.register_scrolling(a0.angleDelta().y())
         elif (
@@ -247,6 +248,7 @@ class Controller:
             and (not self.ctrl_pressed)
             and (self.shift_pressed)
             and self.drawing_mode.drawing_strategy is not None
+            and (not self.drawing_mode.drawing_strategy.IGNORE_SCROLL)
         ):
             self.drawing_mode.drawing_strategy.register_scale(a0.angleDelta().y())
         elif self.side_mode and self.bbox_controller.has_active_bbox():

@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 class BaseLabelingStrategy(ABC):
     POINTS_NEEDED: int
     PREVIEW: bool = False
+    IGNORE_SCROLL: bool = False
 
     def __init__(self, view: "GUI") -> None:
         self.view = view

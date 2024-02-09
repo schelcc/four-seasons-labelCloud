@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     
 class BaseProjCorrection:
     PREVIEW: bool = False
+    IGNORE_SCROLL: bool = True
 
     def __init__(self, view: "GUI") -> None:
         self.view = view
@@ -26,6 +27,21 @@ class BaseProjCorrection:
         pass
 
     def register_tmp_point(self, tmp_pt: Point3D) -> None:
+        pass
+
+    def register_scrolling(self, distance: float) -> None:
+        pass
+
+    def register_trans_y(self, perspective, forward: bool = False, boost: bool = False):
+        pass
+    
+    def register_trans_x(self, perspective, left: bool = False, boost: bool = False):
+        pass
+    
+    def register_trans_z(self, down: bool = False, boost: bool = False):
+        pass
+    
+    def register_scale(self, distance):
         pass
 
     def is_bbox_finished(self) -> bool:
