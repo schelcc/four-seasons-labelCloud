@@ -24,8 +24,6 @@ class PointMatchCorrection(BaseProjCorrection):
             "Please pick the 3D point to match",
             mode=Mode.DRAWING,
         )
-        
-        self.foo = "Hell"
         self.tmp_p2d : Optional[Point2DCamera] = None
         self.tmp_p3d : Optional[Point3D] = (0., 0., 0.,)
         
@@ -45,7 +43,5 @@ class PointMatchCorrection(BaseProjCorrection):
         self.tmp_p2d = new_point
 
     def draw_preview(self) -> None:
-        print(self.foo)
-        return
         if self.tmp_p3d is not None:
             ogl.draw_points([self.tmp_p3d], color=(0, 1, 0, 1))
