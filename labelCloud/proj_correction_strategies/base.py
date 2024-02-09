@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from ..definitions import Point3D, Point2D
+from ..definitions.types import Point2DCamera
 
 if TYPE_CHECKING:
     from ..view.gui import GUI

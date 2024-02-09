@@ -28,6 +28,7 @@ from ..definitions import Color3f, LabelingMode
 from ..io.labels.config import LabelConfig
 from ..io.pointclouds import BasePointCloudHandler
 from ..labeling_strategies import PickingStrategy, SpanningStrategy
+from ..proj_correction_strategies import PointMatchCorrection
 from ..model.point_cloud import PointCloud
 from .settings_dialog import SettingsDialog  # type: ignore
 from .startup.dialog import StartupDialog
@@ -205,6 +206,9 @@ class GUI(QtWidgets.QMainWindow):
         # self.button_show_image.setVisible(
         #     config.getboolean("USER_INTERFACE", "show_2d_image")
         # )
+        
+        # correction mode selection
+        self.button_point_match: QtWidgets.QPushButton
 
         # label mode selection
         self.button_pick_bbox: QtWidgets.QPushButton
@@ -355,6 +359,13 @@ class GUI(QtWidgets.QMainWindow):
 
         # open_2D_img
         self.button_show_image.pressed.connect(lambda: self.show_2d_image())
+        
+        # CORRECTION CONTROL
+        self.button_point_match.clicked.connect(
+            lambda: self.controller.drawing_mode.set_drawing_strategy(
+                PointMatchCorrection(self)
+            )
+        )
 
         # LABEL CONTROL
         self.button_pick_bbox.clicked.connect(
