@@ -82,16 +82,16 @@ def draw_cuboid(
 
 
 def draw_crosshair(
-    cx: float, cy: float, cz: float, color: Color4f = (0, 1, 0, 1)
+    cx: float, cy: float, cz: float, color: Color4f = (0, 1, 0, 1), scale: float = 1.
 ) -> None:
     GL.glBegin(GL.GL_LINES)
     GL.glColor4d(*color)
-    GL.glVertex3d(cx + 0.1, cy, cz)  # x-line
-    GL.glVertex3d(cx - 0.1, cy, cz)
-    GL.glVertex3d(cx, cy + 0.1, cz)  # y-line
-    GL.glVertex3d(cx, cy - 0.1, cz)
-    GL.glVertex3d(cx, cy, cz + 0.1)  # z-line
-    GL.glVertex3d(cx, cy, cz - 0.1)
+    GL.glVertex3d(cx + 0.1*scale, cy, cz)  # x-line
+    GL.glVertex3d(cx - 0.1*scale, cy, cz)
+    GL.glVertex3d(cx, cy + 0.1*scale, cz)  # y-line
+    GL.glVertex3d(cx, cy - 0.1*scale, cz)
+    GL.glVertex3d(cx, cy, cz + 0.1*scale)  # z-line
+    GL.glVertex3d(cx, cy, cz - 0.1*scale)
     GL.glEnd()
 
 

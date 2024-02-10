@@ -18,8 +18,8 @@ class BaseLabelingStrategy(ABC):
         self.points_registered = 0
         self.point_1: Optional[Point3D] = None
 
-    def is_bbox_finished(self) -> bool:
-        return self.points_registered >= self.__class__.POINTS_NEEDED
+    def is_finished(self) -> bool:
+        return self.points_registered >= self.__class__.points_needed
 
     @abstractmethod
     def register_point(self, new_point: Point3D) -> None:

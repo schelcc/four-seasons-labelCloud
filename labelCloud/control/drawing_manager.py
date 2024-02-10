@@ -5,15 +5,18 @@ from ..labeling_strategies import BaseLabelingStrategy
 from ..proj_correction_strategies import BaseProjCorrection
 from .bbox_controller import BoundingBoxController
 
+from .pcd_manager import PointCloudManger
+
 if TYPE_CHECKING:
     from ..view.gui import GUI
 
 
 class DrawingManager(object):
-    def __init__(self, bbox_controller: BoundingBoxController) -> None:
+    def __init__(self, bbox_controller: BoundingBoxController, pcd_manager: PointCloudManger) -> None:
         self.view: "GUI"
         self.bbox_controller = bbox_controller
         self.drawing_strategy: Union[BaseLabelingStrategy, BaseProjCorrection, None] = None
+        self.pcd_manager: PointCloudManger = pcd_manager
 
     def set_view(self, view: "GUI") -> None:
         self.view = view
@@ -46,13 +49,17 @@ class DrawingManager(object):
         assert self.drawing_strategy is not None
         world_point = self.view.gl_widget.get_world_coords(x, y, correction=correction)
         
+        if isinstance(self.drawing_strategy, BaseProjCorrection):
+            world_point = self.pcd_manager.discretize_pt(world_point, replace_color=(1., 1., 1.,))
 
         if is_temporary:
             self.drawing_strategy.register_tmp_point(world_point)
         else:
-            self.drawing_strategy.register_point(world_point)
-            if (
-                self.drawing_strategy.is_bbox_finished()
+            if isinstance(self.drawing_strategy, BaseProjCorrection):
+                if not self.drawing_strategy.hold_3d():
+                    self.drawing_strategy.register_point(world_point)
+            elif (
+                self.drawing_strategy.is_finished()
             ):  # Register bbox to bbox controller when finished
                 self.bbox_controller.add_bbox(self.drawing_strategy.get_bbox())
                 self.drawing_strategy.reset()

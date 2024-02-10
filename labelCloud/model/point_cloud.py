@@ -11,12 +11,15 @@ from PyQt5.QtWidgets import QMessageBox
 from labelCloud.io.labels.config import LabelConfig
 
 from ..control.config_manager import config
-from ..definitions import LabelingMode, Point3D, Rotations3D, Translation3D
+from ..definitions import LabelingMode, Point3D, Rotations3D, Translation3D, Color3f
 from ..io.pointclouds import BasePointCloudHandler
 from ..io.segmentations import BaseSegmentationHandler
 from ..utils.color import colorize_points_with_height
 from ..utils.logger import end_section, green, print_column, red, start_section, yellow
 from . import Perspective
+
+from scipy import spatial
+
 
 # Get size of float (4 bytes) for VBOs
 SIZE_OF_FLOAT = ctypes.sizeof(ctypes.c_float)
@@ -58,6 +61,9 @@ class PointCloud(object):
         self.path = path
         self.points = points
         self.colors = colors if type(colors) == np.ndarray and len(colors) > 0 else None
+    
+        # For point snapping        
+        self.kd_tree = spatial.KDTree(self.points)
 
         self.labels = None
         if LabelConfig().type == LabelingMode.SEMANTIC_SEGMENTATION:
@@ -74,8 +80,6 @@ class PointCloud(object):
         )
         self.init_rotation: Rotations3D = init_rotation or tuple([0, 0, 0])  # type: ignore
 
-        # For transformation correction, current selected point
-        self.selected_point : Optional[Point3D] = None
         
         # Point cloud transformations
         self.trans_x, self.trans_y, self.trans_z = self.init_translation
@@ -168,6 +172,8 @@ class PointCloud(object):
         points, colors = BasePointCloudHandler.get_handler(
             path.suffix
         ).read_point_cloud(path=path)
+
+        
 
         labels = None
         if LabelConfig().type == LabelingMode.SEMANTIC_SEGMENTATION:
@@ -281,14 +287,18 @@ class PointCloud(object):
     def get_translation(self) -> Translation3D:
         return self.trans_x, self.trans_y, self.trans_z
     
-    def get_selected_point(self) -> Optional[Point3D]:
-        return self.selected_point
 
     def get_mins_maxs(self) -> Tuple[npt.NDArray, npt.NDArray]:
         return self.pcd_mins, self.pcd_maxs
 
     def get_min_max_height(self) -> Tuple[float, float]:
         return self.pcd_mins[2], self.pcd_maxs[2]
+
+    def get_nearest_point(self, raw_pt : Point3D, replace_color : Optional[Color3f] = None):
+        idx = self.kd_tree.query(raw_pt)[1]
+        pt = self.points[idx]
+        
+        return pt
 
     def set_rot_x(self, angle) -> None:
         self.rot_x = angle % 360
@@ -321,8 +331,6 @@ class PointCloud(object):
     def set_focus(self, focus):
         self.focus = focus
         
-    def set_selected_point(self, new_point : Point3D):
-        self.selected_point = new_point
         
     def unset_focus(self):
         self.focus = None

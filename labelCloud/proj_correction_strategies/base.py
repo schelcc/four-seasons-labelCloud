@@ -17,6 +17,9 @@ class BaseProjCorrection:
     # Note - In the interest of not changing more than needed, 2d point actions will be named accordingly,
     # whereas 3d point actions will be assumed 3d
 
+    def hold_3d(self) -> bool:
+        raise NotImplementedError
+    
     def register_point_2d(self, new_point: Point2D) -> None:
         pass
     
@@ -44,7 +47,7 @@ class BaseProjCorrection:
     def register_scale(self, distance):
         pass
 
-    def is_bbox_finished(self) -> bool:
+    def is_finished(self) -> bool:
         pass
     
     def reset(self) -> None:

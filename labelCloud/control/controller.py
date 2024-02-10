@@ -31,7 +31,7 @@ class Controller:
         self.bbox_controller = BoundingBoxController()
 
         # Drawing states
-        self.drawing_mode = DrawingManager(self.bbox_controller)
+        self.drawing_mode = DrawingManager(self.bbox_controller, self.pcd_manager)
         self.align_mode = AlignMode(self.pcd_manager)
 
         # Control states

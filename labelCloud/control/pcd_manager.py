@@ -11,7 +11,7 @@ import numpy as np
 import open3d as o3d
 import pkg_resources
 
-from ..definitions import LabelingMode, Point3D
+from ..definitions import LabelingMode, Point3D, Color3f
 from ..io.labels.config import LabelConfig
 from ..io.pointclouds import BasePointCloudHandler, Open3DHandler
 from ..model import BBox, Perspective, PointCloud
@@ -157,6 +157,9 @@ class PointCloudManger(object):
         bboxes = self.label_manager.import_labels(self.pcd_path)
         logging.info(green("Loaded %s bboxes!" % len(bboxes)))
         return bboxes
+
+    def discretize_pt(self, point : Point3D, replace_color : Optional[Color3f] = None):
+        return self.pointcloud.get_nearest_point(point, replace_color=replace_color)
 
     # SETTER
     def set_view(self, view: "GUI") -> None:
