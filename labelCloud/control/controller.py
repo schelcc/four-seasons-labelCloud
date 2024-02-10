@@ -372,6 +372,9 @@ class Controller:
             perspective = self.pcd_manager.get_perspective()
             self.drawing_mode.drawing_strategy.register_trans_z(down=True, boost=self.shift_pressed)
 
+        elif a0.key() == Keys.Key_Space and self.drawing_mode.is_active():
+            self.drawing_mode.drawing_strategy.reset()
+
         #### DUAL EVENTS BASED ON PICKING
         elif a0.key() == Keys.Key_Alt:
             # Unset focus

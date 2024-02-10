@@ -52,3 +52,7 @@ class PointMatchCorrection(BaseProjCorrection):
         elif self.point_3d is not None:
             ogl.draw_points([self.point_3d], color=(0, 1, 0, 1), point_size=10)
             ogl.draw_crosshair(self.point_3d[0], self.point_3d[1], self.point_3d[2], color=(0, 1, 0, 1), scale=20)
+    
+    def reset(self) -> None:
+        self.point_3d = None
+        self.point_2d = None
