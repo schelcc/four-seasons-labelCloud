@@ -117,13 +117,22 @@ STYLESHEET = """
     }}
 """
 
-
 class GUI(QtWidgets.QMainWindow):
     def __init__(self, control: "Controller") -> None:
         super(GUI, self).__init__()
+
+        usage_mode = config.get("FILE", "usage_mode")
+
+        usage_mode = usage_mode.replace("\"", "")
+
+        self.in_labeling = (usage_mode == "label")
+        self.in_projection = (usage_mode == "projection")        
+        
+        logging.info(f"Usage mode is {usage_mode}")
+         
         uic.loadUi(
             pkg_resources.resource_filename(
-                "labelCloud.resources.interfaces", "interface.ui"
+                "labelCloud.resources.interfaces", f"interface-{usage_mode}.ui"
             ),
             self,
         )
@@ -139,6 +148,7 @@ class GUI(QtWidgets.QMainWindow):
                 )
             )
         )        
+
 
         # Image List (LXH)
         self.bbox_previous = None
@@ -190,16 +200,17 @@ class GUI(QtWidgets.QMainWindow):
         self.button_set_pcd: QtWidgets.QPushButton
         self.progressbar_pcds: QtWidgets.QProgressBar
 
-        # bbox control section
-        self.button_bbox_up: QtWidgets.QPushButton
-        self.button_bbox_down: QtWidgets.QPushButton
-        self.button_bbox_left: QtWidgets.QPushButton
-        self.button_bbox_right: QtWidgets.QPushButton
-        self.button_bbox_forward: QtWidgets.QPushButton
-        self.button_bbox_backward: QtWidgets.QPushButton
-        self.dial_bbox_z_rotation: QtWidgets.QDial
-        self.button_bbox_decrease_dimension: QtWidgets.QPushButton
-        self.button_bbox_increase_dimension: QtWidgets.QPushButton
+        if self.in_labeling:
+            # bbox control section
+            self.button_bbox_up: QtWidgets.QPushButton
+            self.button_bbox_down: QtWidgets.QPushButton
+            self.button_bbox_left: QtWidgets.QPushButton
+            self.button_bbox_right: QtWidgets.QPushButton
+            self.button_bbox_forward: QtWidgets.QPushButton
+            self.button_bbox_backward: QtWidgets.QPushButton
+            self.dial_bbox_z_rotation: QtWidgets.QDial
+            self.button_bbox_decrease_dimension: QtWidgets.QPushButton
+            self.button_bbox_increase_dimension: QtWidgets.QPushButton
 
         # 2d image viewer
         self.button_show_image: QtWidgets.QPushButton
@@ -207,13 +218,15 @@ class GUI(QtWidgets.QMainWindow):
         #     config.getboolean("USER_INTERFACE", "show_2d_image")
         # )
         
-        # correction mode selection
-        self.button_point_match: QtWidgets.QPushButton
+        if self.in_projection: 
+            # correction mode selection
+            self.button_point_match: QtWidgets.QPushButton
 
-        # label mode selection
-        self.button_pick_bbox: QtWidgets.QPushButton
-        self.button_span_bbox: QtWidgets.QPushButton
-        self.button_save_label: QtWidgets.QPushButton
+        if self.in_labeling:
+            # label mode selection
+            self.button_pick_bbox: QtWidgets.QPushButton
+            self.button_span_bbox: QtWidgets.QPushButton
+            self.button_save_label: QtWidgets.QPushButton
 
         # RIGHT PANEL
         self.label_list: QtWidgets.QListWidget
@@ -299,35 +312,37 @@ class GUI(QtWidgets.QMainWindow):
         self.button_prev_pcd.clicked.connect(self.controller.prev_pcd)
         self.button_prev_pcd.clicked.connect(lambda: self.show_2d_image())
 
-        # BBOX CONTROL
-        self.button_bbox_up.pressed.connect(lambda: self.controller.bbox_controller.translate_along_z())
-        self.button_bbox_up.pressed.connect(lambda: self.show_2d_image())
+        if self.in_labeling: 
+            # BBOX CONTROL
+            self.button_bbox_up.pressed.connect(lambda: self.controller.bbox_controller.translate_along_z())
+            self.button_bbox_up.pressed.connect(lambda: self.show_2d_image())
 
-        self.button_bbox_down.pressed.connect(lambda: self.controller.bbox_controller.translate_along_z(down=True))
-        self.button_bbox_down.pressed.connect(lambda: self.show_2d_image())
+            self.button_bbox_down.pressed.connect(lambda: self.controller.bbox_controller.translate_along_z(down=True))
+            self.button_bbox_down.pressed.connect(lambda: self.show_2d_image())
 
-        self.button_bbox_left.pressed.connect(lambda: self.controller.bbox_controller.translate_along_x(left=True))
-        self.button_bbox_left.pressed.connect(lambda: self.show_2d_image())
+            self.button_bbox_left.pressed.connect(lambda: self.controller.bbox_controller.translate_along_x(left=True))
+            self.button_bbox_left.pressed.connect(lambda: self.show_2d_image())
 
-        self.button_bbox_right.pressed.connect(self.controller.bbox_controller.translate_along_x)
-        self.button_bbox_right.pressed.connect(lambda: self.show_2d_image())
+            self.button_bbox_right.pressed.connect(self.controller.bbox_controller.translate_along_x)
+            self.button_bbox_right.pressed.connect(lambda: self.show_2d_image())
 
-        self.button_bbox_forward.pressed.connect(lambda: self.controller.bbox_controller.translate_along_y(forward=True))
-        self.button_bbox_forward.pressed.connect(lambda: self.show_2d_image())
+            self.button_bbox_forward.pressed.connect(lambda: self.controller.bbox_controller.translate_along_y(forward=True))
+            self.button_bbox_forward.pressed.connect(lambda: self.show_2d_image())
 
         self.button_set_pcd.pressed.connect(lambda: self.ask_custom_index())
 
-        self.button_bbox_backward.pressed.connect(lambda: self.controller.bbox_controller.translate_along_y())
-        self.button_bbox_backward.pressed.connect(lambda: self.show_2d_image())
+        if self.in_labeling:
+            self.button_bbox_backward.pressed.connect(lambda: self.controller.bbox_controller.translate_along_y())
+            self.button_bbox_backward.pressed.connect(lambda: self.show_2d_image())
 
-        self.dial_bbox_z_rotation.valueChanged.connect(lambda x: self.controller.bbox_controller.rotate_around_z(x, absolute=True))
-        self.dial_bbox_z_rotation.valueChanged.connect(lambda: self.show_2d_image())
+            self.dial_bbox_z_rotation.valueChanged.connect(lambda x: self.controller.bbox_controller.rotate_around_z(x, absolute=True))
+            self.dial_bbox_z_rotation.valueChanged.connect(lambda: self.show_2d_image())
 
-        self.button_bbox_decrease_dimension.clicked.connect(lambda: self.controller.bbox_controller.scale(decrease=True))
-        self.button_bbox_decrease_dimension.clicked.connect(lambda: self.show_2d_image())
+            self.button_bbox_decrease_dimension.clicked.connect(lambda: self.controller.bbox_controller.scale(decrease=True))
+            self.button_bbox_decrease_dimension.clicked.connect(lambda: self.show_2d_image())
 
-        self.button_bbox_increase_dimension.clicked.connect(lambda: self.controller.bbox_controller.scale())
-        self.button_bbox_increase_dimension.clicked.connect(lambda: self.show_2d_image())
+            self.button_bbox_increase_dimension.clicked.connect(lambda: self.controller.bbox_controller.scale())
+            self.button_bbox_increase_dimension.clicked.connect(lambda: self.show_2d_image())
 
 
         # LABELING CONTROL
@@ -359,25 +374,28 @@ class GUI(QtWidgets.QMainWindow):
 
         # open_2D_img
         self.button_show_image.pressed.connect(lambda: self.show_2d_image())
-        
-        # CORRECTION CONTROL
-        self.button_point_match.clicked.connect(
-            lambda: self.controller.drawing_mode.set_drawing_strategy(
-                PointMatchCorrection(self)
+       
+        if self.in_projection: 
+            # CORRECTION CONTROL
+            self.button_point_match.clicked.connect(
+                lambda: self.controller.drawing_mode.set_drawing_strategy(
+                    PointMatchCorrection(self)
+                )
             )
-        )
 
-        # LABEL CONTROL
-        self.button_pick_bbox.clicked.connect(
-            lambda: self.controller.drawing_mode.set_drawing_strategy(
-                PickingStrategy(self)
+        if self.in_labeling:
+            # LABEL CONTROL
+            self.button_pick_bbox.clicked.connect(
+                lambda: self.controller.drawing_mode.set_drawing_strategy(
+                    PickingStrategy(self)
+                )
             )
-        )
-        self.button_span_bbox.clicked.connect(
-            lambda: self.controller.drawing_mode.set_drawing_strategy(
-                SpanningStrategy(self)
+            self.button_span_bbox.clicked.connect(
+                lambda: self.controller.drawing_mode.set_drawing_strategy(
+                    SpanningStrategy(self)
+                )
             )
-        )
+
         self.button_save_label.clicked.connect(self.controller.save)
 
         # BOUNDING BOX PARAMETER
@@ -533,65 +551,66 @@ class GUI(QtWidgets.QMainWindow):
 
             # draw active bbox to the image
 
-            
-            all_bboxes = self.controller.bbox_controller.bboxes
-            active_bbox_idx = self.controller.bbox_controller.active_bbox_id
+            # TODO : Refactor out to own method
+            if self.in_labeling:            
+                all_bboxes = self.controller.bbox_controller.bboxes
+                active_bbox_idx = self.controller.bbox_controller.active_bbox_id
 
-            # Draw all bboxes in red
-            for idx, bbox in enumerate(all_bboxes):
+                # Draw all bboxes in red
+                for idx, bbox in enumerate(all_bboxes):
 
-                corners = np.array([[-1,-1,-1],
-                    [-1,1,-1],
-                    [-1,1,1],
-                    [-1,-1,1],
-                    [1,-1,-1],
-                    [1,1,-1],
-                    [1,1,1],
-                    [1,-1,1]]).astype(np.float64)
-                
-                thickness = 2
-                color = QtCore.Qt.blue
-                
-                # print(f"{idx} : ({bbox.center})")
-                
-                if self.controller.bbox_controller.has_active_bbox and \
-                    idx == self.controller.bbox_controller.active_bbox_id:
-                        thickness = 3
-                        color = QtCore.Qt.green
-                
-                corners[:,0] *= bbox.length/2.0
-                corners[:,1] *= bbox.width/2.0
-                corners[:,2] *= bbox.height/2.0
-                angle = bbox.z_rotation/180.0*np.pi
-                Rz = np.array([[np.cos(angle),-np.sin(angle),0],[np.sin(angle),np.cos(angle),0],[0,0,1]])
-                corners = np.transpose(np.matmul(Rz, np.transpose(corners, (1,0))), (1,0))   
-                corners[:,0] += bbox.center[0]
-                corners[:,1] += bbox.center[1]
-                corners[:,2] += bbox.center[2]
-                pts_homo = np.ones((corners.shape[0], 4))
-                pts_homo[:,0:3] = corners
-                P = P_matrix[i]
-                # if np.any(corners[:, 0] > -0.5):
-                #     continue
-                pts_img = np.matmul(P, pts_homo.transpose()).transpose()
-                if np.any(pts_img[:, 2] < 0):
-                    continue
-                pts_img[:,0] /= pts_img[:,2]
-                pts_img[:,1] /= pts_img[:,2]   
-                x = pts_img[:,0]
-                y = pts_img[:,1]
-                x_mean = np.mean(x)
-                y_mean = np.mean(y)
+                    corners = np.array([[-1,-1,-1],
+                        [-1,1,-1],
+                        [-1,1,1],
+                        [-1,-1,1],
+                        [1,-1,-1],
+                        [1,1,-1],
+                        [1,1,1],
+                        [1,-1,1]]).astype(np.float64)
+                    
+                    thickness = 2
+                    color = QtCore.Qt.blue
+                    
+                    # print(f"{idx} : ({bbox.center})")
+                    
+                    if self.controller.bbox_controller.has_active_bbox and \
+                        idx == self.controller.bbox_controller.active_bbox_id:
+                            thickness = 3
+                            color = QtCore.Qt.green
+                    
+                    corners[:,0] *= bbox.length/2.0
+                    corners[:,1] *= bbox.width/2.0
+                    corners[:,2] *= bbox.height/2.0
+                    angle = bbox.z_rotation/180.0*np.pi
+                    Rz = np.array([[np.cos(angle),-np.sin(angle),0],[np.sin(angle),np.cos(angle),0],[0,0,1]])
+                    corners = np.transpose(np.matmul(Rz, np.transpose(corners, (1,0))), (1,0))   
+                    corners[:,0] += bbox.center[0]
+                    corners[:,1] += bbox.center[1]
+                    corners[:,2] += bbox.center[2]
+                    pts_homo = np.ones((corners.shape[0], 4))
+                    pts_homo[:,0:3] = corners
+                    P = P_matrix[i]
+                    # if np.any(corners[:, 0] > -0.5):
+                    #     continue
+                    pts_img = np.matmul(P, pts_homo.transpose()).transpose()
+                    if np.any(pts_img[:, 2] < 0):
+                        continue
+                    pts_img[:,0] /= pts_img[:,2]
+                    pts_img[:,1] /= pts_img[:,2]   
+                    x = pts_img[:,0]
+                    y = pts_img[:,1]
+                    x_mean = np.mean(x)
+                    y_mean = np.mean(y)
 
-                if not (x_mean<-margin or x_mean>width+margin or y_mean<-margin or y_mean>height+margin):
-                    painter = QPainter(pixelmap)
-                    painter.setPen(QPen(color, thickness, QtCore.Qt.DashLine))
-                    for m in range(4):
-                        n = (m+1)%4
-                        painter.drawLine(x[m],y[m],x[n],y[n])
-                        painter.drawLine(x[m+4],y[m+4],x[n+4],y[n+4])
-                        painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
-                    painter.end()
+                    if not (x_mean<-margin or x_mean>width+margin or y_mean<-margin or y_mean>height+margin):
+                        painter = QPainter(pixelmap)
+                        painter.setPen(QPen(color, thickness, QtCore.Qt.DashLine))
+                        for m in range(4):
+                            n = (m+1)%4
+                            painter.drawLine(x[m],y[m],x[n],y[n])
+                            painter.drawLine(x[m+4],y[m+4],x[n+4],y[n+4])
+                            painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
+                        painter.end()
             
             # Scale down the image size
             pixelmap = pixelmap.transformed(QtGui.QTransform().scale(0.50, 0.50))
@@ -708,8 +727,11 @@ class GUI(QtWidgets.QMainWindow):
 
     # Enables, disables the draw mode
     def activate_draw_modes(self, state: bool) -> None:
-        self.button_pick_bbox.setEnabled(state)
-        self.button_span_bbox.setEnabled(state)
+        if self.in_labeling:
+            self.button_pick_bbox.setEnabled(state)
+            self.button_span_bbox.setEnabled(state)
+        elif self.in_projection:
+            self.button_point_match.setEnabled(state)
 
     def line_edited_activated(self) -> bool:
         for line_edit in self.all_line_edits:
