@@ -2,7 +2,7 @@ import logging
 from typing import TYPE_CHECKING, Optional
 
 from ..definitions import Point3D, Point2D
-from ..definitions.types import Point2DCamera
+from ..definitions.types import PointPairCamera
 
 if TYPE_CHECKING:
     from ..view.gui import GUI

@@ -4,8 +4,8 @@ from PyQt5.QtGui import QColor
 
 
 Point2D = Tuple[float, float]
-PointPairCamera = Tuple[Point3D, Point2D, Camera]
 Point3D = Tuple[float, float, float]
+PointPairCamera = Tuple[Point3D, Point2D, Camera]
 
 Rotations3D = Tuple[float, float, float]  # euler angles in degrees
 

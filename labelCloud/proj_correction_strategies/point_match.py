@@ -6,7 +6,7 @@ import numpy as np
 from . import BaseProjCorrection
 from ..control.config_manager import config
 from ..definitions import Mode, Point2D, Point3D, Camera
-from ..definitions.types import Point2D, Point3D, Point2DCamera
+from ..definitions.types import Point2D, Point3D, PointPairCamera
 from ..utils import oglhelper as ogl
 from ..io.labels.config import LabelConfig
 
@@ -24,11 +24,13 @@ class PointMatchCorrection(BaseProjCorrection):
             "Please pick the 3D point to match",
             mode=Mode.DRAWING,
         )
-        self.tmp_p2d : Optional[Point2DCamera] = None
+        self.tmp_p2d : Optional[Point2D] = None
         self.tmp_p3d : Optional[Point3D] = (0., 0., 0.,)
+        self.tmp_cam : Optional[Camera] = None
         
-        self.point_2d : Optional[Point2DCamera] = None
+        self.point_2d : Optional[Point2d] = None
         self.point_3d : Optional[Point3D] = None
+        self.camera : Optional[Camera] = NOne
 
     def hold_3d(self) -> bool:
         return (self.point_3d is not None)
@@ -37,13 +39,13 @@ class PointMatchCorrection(BaseProjCorrection):
     def register_point(self, new_point: Point3D) -> None:
         self.point_3d = new_point
         
-    def register_point_2d(self, new_point: Point2DCamera) -> None:
+    def register_point_2d(self, new_point: Point2D, new_cam: Camera) -> None:
         self.point_2d = new_point
         
     def register_tmp_point(self, new_point: Point3D) -> None:
         self.tmp_p3d = new_point
         
-    def register_tmp_point_2d(self, new_point: Point2DCamera) -> None:
+    def register_tmp_point_2d(self, new_point: Point2D, new_cam: Camera) -> None:
         self.tmp_p2d = new_point
 
     def draw_preview(self) -> None:
