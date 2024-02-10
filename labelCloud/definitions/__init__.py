@@ -11,6 +11,7 @@ from .types import (
     Dimensions3D,
     Point2D,
     Point3D,
+    PointPairCamera,
     Rotations3D,
     Translation3D,
 )
