@@ -158,6 +158,7 @@ class GUI(QtWidgets.QMainWindow):
         self.images_parent = QtWidgets.QWidget()
         self.image_layout = QtWidgets.QHBoxLayout(self.images_parent)
 
+
         for i in range(len(self.cam_list)):
             imageLabel = QLabel()
             imageLabel.setWindowTitle(f"2D Image ({self.cam_list[i]})")
@@ -536,6 +537,64 @@ class GUI(QtWidgets.QMainWindow):
         dialog = SettingsDialog(self)
         dialog.exec()
 
+    def draw_bboxes(self, width, height, P_matrix, pixelmap, cam_number : int, margin): # TODO type
+        all_bboxes = self.controller.bbox_controller.bboxes
+        active_bbox_idx = self.controller.bbox_controller.active_bbox_id
+
+        # Draw all bboxes in red
+        for idx, bbox in enumerate(all_bboxes):
+
+            corners = np.array([[-1,-1,-1],
+                [-1,1,-1],
+                [-1,1,1],
+                [-1,-1,1],
+                [1,-1,-1],
+                [1,1,-1],
+                [1,1,1],
+                [1,-1,1]]).astype(np.float64)
+            
+            thickness = 2
+            color = QtCore.Qt.blue
+            
+            # print(f"{idx} : ({bbox.center})")
+            
+            if self.controller.bbox_controller.has_active_bbox and \
+                idx == self.controller.bbox_controller.active_bbox_id:
+                    thickness = 3
+                    color = QtCore.Qt.green
+            
+            corners[:,0] *= bbox.length/2.0
+            corners[:,1] *= bbox.width/2.0
+            corners[:,2] *= bbox.height/2.0
+            angle = bbox.z_rotation/180.0*np.pi
+            Rz = np.array([[np.cos(angle),-np.sin(angle),0],[np.sin(angle),np.cos(angle),0],[0,0,1]])
+            corners = np.transpose(np.matmul(Rz, np.transpose(corners, (1,0))), (1,0))   
+            corners[:,0] += bbox.center[0]
+            corners[:,1] += bbox.center[1]
+            corners[:,2] += bbox.center[2]
+            pts_homo = np.ones((corners.shape[0], 4))
+            pts_homo[:,0:3] = corners
+            P = P_matrix[cam_number]
+            pts_img = np.matmul(P, pts_homo.transpose()).transpose()
+            if np.any(pts_img[:, 2] < 0):
+                continue
+            pts_img[:,0] /= pts_img[:,2]
+            pts_img[:,1] /= pts_img[:,2]   
+            x = pts_img[:,0]
+            y = pts_img[:,1]
+            x_mean = np.mean(x)
+            y_mean = np.mean(y)
+
+            if not (x_mean<-margin or x_mean>width+margin or y_mean<-margin or y_mean>height+margin):
+                painter = QPainter(pixelmap)
+                painter.setPen(QPen(color, thickness, QtCore.Qt.DashLine))
+                for m in range(4):
+                    n = (m+1)%4
+                    painter.drawLine(x[m],y[m],x[n],y[n])
+                    painter.drawLine(x[m+4],y[m+4],x[n+4],y[n+4])
+                    painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
+                painter.end()
+
     def show_2d_image(self):
         """Searches for a 2D image with the point cloud name and displays it in a new window."""
 
@@ -562,79 +621,14 @@ class GUI(QtWidgets.QMainWindow):
             image = QtGui.QImage(QtGui.QImageReader(str(image_path)).read())
             pixelmap = QPixmap.fromImage(image)
             pixelmap = pixelmap.scaledToWidth(1024)
-            # if self.cam_list[i] == '_top_mid_dd.png': # flip mid img
-                #pixelmap = pixelmap.transformed(QtGui.QTransform().rotate(180.0))
-                # TODO - figure out if anything needs to be done to the pmatrix after flipping the image
-                #           - the bboxes were oriented incorrectly before flipping, and seem to be correct afterwards
                 
             width, height = 1024, 768
 
-            # draw active bbox to the image
-
-            # TODO : Refactor out to own method
             if self.in_labeling:            
-                all_bboxes = self.controller.bbox_controller.bboxes
-                active_bbox_idx = self.controller.bbox_controller.active_bbox_id
-
-                # Draw all bboxes in red
-                for idx, bbox in enumerate(all_bboxes):
-
-                    corners = np.array([[-1,-1,-1],
-                        [-1,1,-1],
-                        [-1,1,1],
-                        [-1,-1,1],
-                        [1,-1,-1],
-                        [1,1,-1],
-                        [1,1,1],
-                        [1,-1,1]]).astype(np.float64)
-                    
-                    thickness = 2
-                    color = QtCore.Qt.blue
-                    
-                    # print(f"{idx} : ({bbox.center})")
-                    
-                    if self.controller.bbox_controller.has_active_bbox and \
-                        idx == self.controller.bbox_controller.active_bbox_id:
-                            thickness = 3
-                            color = QtCore.Qt.green
-                    
-                    corners[:,0] *= bbox.length/2.0
-                    corners[:,1] *= bbox.width/2.0
-                    corners[:,2] *= bbox.height/2.0
-                    angle = bbox.z_rotation/180.0*np.pi
-                    Rz = np.array([[np.cos(angle),-np.sin(angle),0],[np.sin(angle),np.cos(angle),0],[0,0,1]])
-                    corners = np.transpose(np.matmul(Rz, np.transpose(corners, (1,0))), (1,0))   
-                    corners[:,0] += bbox.center[0]
-                    corners[:,1] += bbox.center[1]
-                    corners[:,2] += bbox.center[2]
-                    pts_homo = np.ones((corners.shape[0], 4))
-                    pts_homo[:,0:3] = corners
-                    P = P_matrix[i]
-                    # if np.any(corners[:, 0] > -0.5):
-                    #     continue
-                    pts_img = np.matmul(P, pts_homo.transpose()).transpose()
-                    if np.any(pts_img[:, 2] < 0):
-                        continue
-                    pts_img[:,0] /= pts_img[:,2]
-                    pts_img[:,1] /= pts_img[:,2]   
-                    x = pts_img[:,0]
-                    y = pts_img[:,1]
-                    x_mean = np.mean(x)
-                    y_mean = np.mean(y)
-
-                    if not (x_mean<-margin or x_mean>width+margin or y_mean<-margin or y_mean>height+margin):
-                        painter = QPainter(pixelmap)
-                        painter.setPen(QPen(color, thickness, QtCore.Qt.DashLine))
-                        for m in range(4):
-                            n = (m+1)%4
-                            painter.drawLine(x[m],y[m],x[n],y[n])
-                            painter.drawLine(x[m+4],y[m+4],x[n+4],y[n+4])
-                            painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
-                        painter.end()
+               self.draw_bboxes(width, height, P_matrix, pixelmap, i, margin) 
             
             # Scale down the image size
             pixelmap = pixelmap.transformed(QtGui.QTransform().scale(0.50, 0.50))
-            
             
             self.imageLabelList[i].setPixmap(pixelmap)
             self.imageLabelList[i].update()                     
