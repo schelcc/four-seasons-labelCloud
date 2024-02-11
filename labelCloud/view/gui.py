@@ -488,26 +488,31 @@ class GUI(QtWidgets.QMainWindow):
             self.controller.key_release_event(event)
 
         # Mouse Events
-        elif (event.type() == QEvent.MouseMove) and (event_object == self.gl_widget):
+        elif (event.type() == QEvent.MouseMove) and (event_object == self.gl_widget): # MOUSE MOVE
             self.controller.mouse_move_event(event)
             if self.in_labeling:
                 self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
-        elif (event.type() == QEvent.Wheel) and (event_object == self.gl_widget):
+                
+        elif (event.type() == QEvent.Wheel) and (event_object == self.gl_widget): # MOUSE SCROLL
             self.controller.mouse_scroll_event(event)
             if self.in_labeling:
                 self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
-        elif event.type() == QEvent.MouseButtonDblClick and (
+
+        elif event.type() == QEvent.MouseButtonDblClick and ( # MOUSE DOUBLE CLICK
             event_object == self.gl_widget
         ):
             self.controller.mouse_double_clicked(event)
             return True
         elif (event.type() == QEvent.MouseButtonPress) and (
             event_object == self.gl_widget
+
+        elif (event.type() == QEvent.MouseButtonPress) and ( # MOUSE SINGLE CLICK
         ):
             self.controller.mouse_clicked(event)
             if self.in_labeling:
                 self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
-        elif (event.type() == QEvent.MouseButtonPress) and (
+
+        elif (event.type() == QEvent.MouseButtonPress) and ( # ???
             event_object != self.current_class_dropdown
         ):
             self.current_class_dropdown.clearFocus()
