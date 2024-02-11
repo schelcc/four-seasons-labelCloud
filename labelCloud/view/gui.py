@@ -503,10 +503,9 @@ class GUI(QtWidgets.QMainWindow):
         ):
             self.controller.mouse_double_clicked(event)
             return True
-        elif (event.type() == QEvent.MouseButtonPress) and (
-            event_object == self.gl_widget
-
+        
         elif (event.type() == QEvent.MouseButtonPress) and ( # MOUSE SINGLE CLICK
+            event_object == self.gl_widget
         ):
             self.controller.mouse_clicked(event)
             if self.in_labeling:
