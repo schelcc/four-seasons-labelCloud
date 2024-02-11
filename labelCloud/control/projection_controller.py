@@ -14,7 +14,7 @@ from ..definitions import Mode, Camera
 from ..definitions.types import PointPairCamera, Point2D, Point3D
 from ..utils import oglhelper
 from .config_manager import config
-from .pcd_manager import PointCloudManger
+from .pcd_manager import PointCloudManager
 
 if TYPE_CHECKING:
     from ..view.gui import GUI
@@ -38,8 +38,8 @@ class ProjectionCorrectionController(object):
     
     def __init__(self) -> None:
         self.view: GUI
-        self.pcd_manger: PointCloudManger
         self.points: List[PointPairCamera]
+        self.pcd_manger: PointCloudManager
         self.active_point_id = -1 # -1 means zero point pairs
         
     def has_active_point(self) -> bool:

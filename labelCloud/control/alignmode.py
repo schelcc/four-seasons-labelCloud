@@ -10,14 +10,14 @@ import numpy as np
 
 from ..definitions import Mode, Point3D
 from ..utils import oglhelper as ogl
-from .pcd_manager import PointCloudManger
+from .pcd_manager import PointCloudManager
 
 if TYPE_CHECKING:
     from ..view.gui import GUI
 
 
 class AlignMode(object):
-    def __init__(self, pcd_manager: PointCloudManger) -> None:
+    def __init__(self, pcd_manager: PointCloudManager) -> None:
         self.pcd_manager = pcd_manager
         self.view: GUI
         self.is_active = False

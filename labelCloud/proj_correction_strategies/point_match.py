@@ -30,7 +30,7 @@ class PointMatchCorrection(BaseProjCorrection):
         
         self.point_2d : Optional[Point2d] = None
         self.point_3d : Optional[Point3D] = None
-        self.camera : Optional[Camera] = NOne
+        self.camera : Optional[Camera] = None
 
     def hold_3d(self) -> bool:
         return (self.point_3d is not None)

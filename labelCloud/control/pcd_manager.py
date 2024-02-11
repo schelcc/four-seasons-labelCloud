@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from ..view.gui import GUI
 
 
-class PointCloudManger(object):
+class PointCloudManager(object):
     PCD_EXTENSIONS = BasePointCloudHandler.get_supported_extensions()
     ORIGINALS_FOLDER = "original_pointclouds"
     TRANSLATION_FACTOR = config.getfloat("POINTCLOUD", "STD_TRANSLATION")
@@ -70,7 +70,7 @@ class PointCloudManger(object):
                     self.pcds.append(Path(file))
             else:
                 for file in sorted(self.pcd_folder.iterdir()):
-                    if file.suffix in PointCloudManger.PCD_EXTENSIONS:
+                    if file.suffix in PointCloudManager.PCD_EXTENSIONS:
                         self.pcds.append(file)
         else:
             logging.warning(
@@ -84,7 +84,7 @@ class PointCloudManger(object):
             self.update_pcd_infos()
         else:
             self.view.show_no_pointcloud_dialog(
-                self.pcd_folder, PointCloudManger.PCD_EXTENSIONS
+                self.pcd_folder, PointCloudManager.PCD_EXTENSIONS
             )
             self.view.status_manager.set_message(
                 "Please set the point cloud folder to a location that contains point cloud files."
@@ -199,24 +199,24 @@ class PointCloudManger(object):
     def translate_along_x(self, distance) -> None:
         assert self.pointcloud is not None
         self.pointcloud.set_trans_x(
-            self.pointcloud.trans_x - distance * PointCloudManger.TRANSLATION_FACTOR
+            self.pointcloud.trans_x - distance * PointCloudManager.TRANSLATION_FACTOR
         )
 
     def translate_along_y(self, distance) -> None:
         assert self.pointcloud is not None
         self.pointcloud.set_trans_y(
-            self.pointcloud.trans_y + distance * PointCloudManger.TRANSLATION_FACTOR
+            self.pointcloud.trans_y + distance * PointCloudManager.TRANSLATION_FACTOR
         )
 
     def translate_along_z(self, distance) -> None:
         assert self.pointcloud is not None
         self.pointcloud.set_trans_z(
-            self.pointcloud.trans_z - distance * PointCloudManger.TRANSLATION_FACTOR
+            self.pointcloud.trans_z - distance * PointCloudManager.TRANSLATION_FACTOR
         )
 
     def zoom_into(self, distance) -> None:
         assert self.pointcloud is not None
-        zoom_distance = distance * PointCloudManger.ZOOM_FACTOR
+        zoom_distance = distance * PointCloudManager.ZOOM_FACTOR
         self.pointcloud.set_trans_z(self.pointcloud.trans_z + zoom_distance)
 
     def reset_translation(self) -> None:
@@ -245,7 +245,7 @@ class PointCloudManger(object):
     ) -> None:
         assert self.pointcloud is not None and self.pcd_name is not None
         # Save current, original point cloud in ORIGINALS_FOLDER
-        originals_path = self.pcd_folder.joinpath(PointCloudManger.ORIGINALS_FOLDER)
+        originals_path = self.pcd_folder.joinpath(PointCloudManager.ORIGINALS_FOLDER)
         originals_path.mkdir(parents=True, exist_ok=True)
         copyfile(
             str(self.pcd_path),

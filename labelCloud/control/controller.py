@@ -18,7 +18,7 @@ from .alignmode import AlignMode
 from .bbox_controller import BoundingBoxController
 from .config_manager import config
 from .drawing_manager import LabelDrawingManager
-from .pcd_manager import PointCloudManger
+from .pcd_manager import PointCloudManager
 from .projection_controller import ProjectionCorrectionController
 
 class Controller:
@@ -27,7 +27,7 @@ class Controller:
     def __init__(self) -> None:
         """Initializes all controllers and managers."""
         self.view: "GUI"
-        self.pcd_manager = PointCloudManger()
+        self.pcd_manager = PointCloudManager()
 
         usage_mode = config.get("FILE", "usage_mode")
 

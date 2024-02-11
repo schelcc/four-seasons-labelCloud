@@ -16,7 +16,7 @@ from ..definitions import Mode
 from ..model.bbox import BBox
 from ..utils import oglhelper
 from .config_manager import config
-from .pcd_manager import PointCloudManger
+from .pcd_manager import PointCloudManager
 
 if TYPE_CHECKING:
     from ..view.gui import GUI
@@ -59,7 +59,7 @@ class BoundingBoxController(object):
 
     def __init__(self) -> None:
         self.view: GUI
-        self.pcd_manager: PointCloudManger
+        self.pcd_manager: PointCloudManager
         self.bboxes: List[BBox] = []
         self.active_bbox_id = -1  # -1 means zero bboxes
 
