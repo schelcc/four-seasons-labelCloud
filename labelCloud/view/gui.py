@@ -512,9 +512,10 @@ class GUI(QtWidgets.QMainWindow):
             if self.in_labeling:
                 self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
 
-        elif (event.type() == QEvent.MouseButtonPress) and (
+        elif (event.type() == QEvent.MouseButtonPress) and ( # MOUSE SINGLE CLICK - ON IMAGE
             event_object == self.images_parent
         ):
+            # TODO Recover which image was clicked and ensure we can transfer the qt coords back into px
             self.controller.image_clicked(event)
 
         elif (event.type() == QEvent.MouseButtonPress) and ( # ???

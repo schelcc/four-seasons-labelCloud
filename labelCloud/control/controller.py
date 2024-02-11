@@ -232,8 +232,8 @@ class Controller:
             )
         
     def image_clicked(self, a0 : QtGui.QMouseEvent) -> None:
-        print("img click")
-
+        x, y = a0.x(), a0.y()
+    
     def mouse_clicked(self, a0 : QtGui.QMouseEvent) -> None:
         if self.in_labeling:
             self.mouse_clicked_labeling(a0)
