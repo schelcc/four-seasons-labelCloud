@@ -345,31 +345,32 @@ class GUI(QtWidgets.QMainWindow):
             self.button_bbox_increase_dimension.clicked.connect(lambda: self.show_2d_image())
 
 
-        # LABELING CONTROL
-        self.current_class_dropdown.currentTextChanged.connect(
-            self.controller.bbox_controller.set_classname
-        )
+            # LABELING CONTROL
+            self.current_class_dropdown.currentTextChanged.connect(
+                self.controller.bbox_controller.set_classname
+            )
 
-        self.button_deselect_label.clicked.connect(self.controller.bbox_controller.deselect_bbox)
-        self.button_deselect_label.clicked.connect(lambda: self.show_2d_image())
+            self.button_deselect_label.clicked.connect(self.controller.bbox_controller.deselect_bbox)
+            self.button_deselect_label.clicked.connect(lambda: self.show_2d_image())
 
-        self.button_delete_label.clicked.connect(self.controller.bbox_controller.delete_current_bbox)
-        self.button_delete_label.clicked.connect(lambda: self.show_2d_image())
+            self.button_delete_label.clicked.connect(self.controller.bbox_controller.delete_current_bbox)
+            self.button_delete_label.clicked.connect(lambda: self.show_2d_image())
 
-        self.label_list.currentRowChanged.connect(self.controller.bbox_controller.set_active_bbox)
-        self.label_list.currentRowChanged.connect(lambda: self.show_2d_image())
+            self.label_list.currentRowChanged.connect(self.controller.bbox_controller.set_active_bbox)
+            self.label_list.currentRowChanged.connect(lambda: self.show_2d_image())
 
-        self.button_assign_label.clicked.connect(
-            self.controller.bbox_controller.assign_point_label_in_active_box
-        )
+            self.button_assign_label.clicked.connect(
+                self.controller.bbox_controller.assign_point_label_in_active_box
+            )
 
-        # context menu
-        self.act_delete_class.triggered.connect(self.controller.bbox_controller.delete_current_bbox)
-        self.act_delete_class.triggered.connect(lambda: self.show_2d_image())
+            # context menu
+            self.act_delete_class.triggered.connect(self.controller.bbox_controller.delete_current_bbox)
+            self.act_delete_class.triggered.connect(lambda: self.show_2d_image())
 
-        self.act_crop_pointcloud_inside.triggered.connect(
-            self.controller.crop_pointcloud_inside_active_bbox
-        )
+            self.act_crop_pointcloud_inside.triggered.connect(
+                self.controller.crop_pointcloud_inside_active_bbox
+            )
+
         self.act_change_class_color.triggered.connect(self.change_label_color)
 
         # open_2D_img
@@ -398,36 +399,37 @@ class GUI(QtWidgets.QMainWindow):
 
         self.button_save_label.clicked.connect(self.controller.save)
 
-        # BOUNDING BOX PARAMETER
-        self.edit_pos_x.editingFinished.connect(
-            lambda: self.update_bbox_parameter("pos_x")
-        )
-        self.edit_pos_y.editingFinished.connect(
-            lambda: self.update_bbox_parameter("pos_y")
-        )
-        self.edit_pos_z.editingFinished.connect(
-            lambda: self.update_bbox_parameter("pos_z")
-        )
+        if self.in_labeling:
+            # BOUNDING BOX PARAMETER
+            self.edit_pos_x.editingFinished.connect(
+                lambda: self.update_bbox_parameter("pos_x")
+            )
+            self.edit_pos_y.editingFinished.connect(
+                lambda: self.update_bbox_parameter("pos_y")
+            )
+            self.edit_pos_z.editingFinished.connect(
+                lambda: self.update_bbox_parameter("pos_z")
+            )
 
-        self.edit_length.editingFinished.connect(
-            lambda: self.update_bbox_parameter("length")
-        )
-        self.edit_width.editingFinished.connect(
-            lambda: self.update_bbox_parameter("width")
-        )
-        self.edit_height.editingFinished.connect(
-            lambda: self.update_bbox_parameter("height")
-        )
+            self.edit_length.editingFinished.connect(
+                lambda: self.update_bbox_parameter("length")
+            )
+            self.edit_width.editingFinished.connect(
+                lambda: self.update_bbox_parameter("width")
+            )
+            self.edit_height.editingFinished.connect(
+                lambda: self.update_bbox_parameter("height")
+            )
 
-        self.edit_rot_x.editingFinished.connect(
-            lambda: self.update_bbox_parameter("rot_x")
-        )
-        self.edit_rot_y.editingFinished.connect(
-            lambda: self.update_bbox_parameter("rot_y")
-        )
-        self.edit_rot_z.editingFinished.connect(
-            lambda: self.update_bbox_parameter("rot_z")
-        )
+            self.edit_rot_x.editingFinished.connect(
+                lambda: self.update_bbox_parameter("rot_x")
+            )
+            self.edit_rot_y.editingFinished.connect(
+                lambda: self.update_bbox_parameter("rot_y")
+            )
+            self.edit_rot_z.editingFinished.connect(
+                lambda: self.update_bbox_parameter("rot_z")
+            )
 
         # MENU BAR
         self.act_set_pcd_folder.triggered.connect(self.change_pointcloud_folder)
@@ -435,9 +437,12 @@ class GUI(QtWidgets.QMainWindow):
         self.actiongroup_default_class.triggered.connect(
             self.change_default_object_class
         )
-        self.act_delete_all_labels.triggered.connect(
-            self.controller.bbox_controller.reset
-        )
+
+        if self.in_labeling:
+            self.act_delete_all_labels.triggered.connect(
+                self.controller.bbox_controller.reset
+            )
+            
         self.act_propagate_labels.toggled.connect(set_propagate_labels)
         self.act_z_rotation_only.toggled.connect(set_zrotation_only)
         self.act_color_with_label.toggled.connect(set_color_with_label)
@@ -466,29 +471,31 @@ class GUI(QtWidgets.QMainWindow):
 
     # Collect, filter and forward events to viewer
     def eventFilter(self, event_object, event) -> bool:
-        self.bbox_previous = copy.deepcopy(self.controller.bbox_controller.get_active_bbox())
+        if self.in_labeling:
+            self.bbox_previous = copy.deepcopy(self.controller.bbox_controller.get_active_bbox())
 
         # Keyboard Events
         if (event.type() == QEvent.KeyPress) and event_object in [
             self,
             self.label_list,  # otherwise steals focus for keyboard shortcuts
         ]:
-            # Not sure how to hand this to controller so it's going here
-            if event.key() == QtCore.Qt.Key_QuoteLeft:
-                self.controller.drawing_mode.set_drawing_strategy(PickingStrategy(self))
-            self.controller.key_press_event(event)
-            self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+            if self.in_labeling:
+                self.controller.key_press_event(event)
+                self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
             return True  # TODO: Recheck pyqt behaviour
+
         elif event.type() == QEvent.KeyRelease:
             self.controller.key_release_event(event)
 
         # Mouse Events
         elif (event.type() == QEvent.MouseMove) and (event_object == self.gl_widget):
             self.controller.mouse_move_event(event)
-            self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+            if self.in_labeling:
+                self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
         elif (event.type() == QEvent.Wheel) and (event_object == self.gl_widget):
             self.controller.mouse_scroll_event(event)
-            self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+            if self.in_labeling:
+                self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
         elif event.type() == QEvent.MouseButtonDblClick and (
             event_object == self.gl_widget
         ):
@@ -498,12 +505,14 @@ class GUI(QtWidgets.QMainWindow):
             event_object == self.gl_widget
         ):
             self.controller.mouse_clicked(event)
-            self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+            if self.in_labeling:
+                self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
         elif (event.type() == QEvent.MouseButtonPress) and (
             event_object != self.current_class_dropdown
         ):
             self.current_class_dropdown.clearFocus()
-            self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+            if self.in_labeling:
+                self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
         return False
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:

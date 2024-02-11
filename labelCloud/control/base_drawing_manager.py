@@ -13,7 +13,7 @@ from .projection_controller import ProjectionCorrectionController
 class BaseDrawingManager(object):
     def __init__(self, drawing_strategy_type) -> None:
         self.view: "GUI"
-        self.drawing_strategy_type = type(drawing_strategy_type)
+        self.drawing_strategy_type = drawing_strategy_type
         self.drawing_strategy = None
         
     def set_view(self, view: "GUI") -> None:

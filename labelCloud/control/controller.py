@@ -9,6 +9,8 @@ from PyQt5 import QtGui
 from PyQt5.QtCore import QPoint
 from PyQt5.QtCore import Qt as Keys
 
+from functools import wraps
+
 from ..definitions import BBOX_SIDES, Colors, Context, LabelingMode
 from ..io.labels.config import LabelConfig
 from ..utils import oglhelper
@@ -18,9 +20,24 @@ from .alignmode import AlignMode
 from .bbox_controller import BoundingBoxController
 from .config_manager import config
 from .drawing_manager import LabelDrawingManager
+from .drawing_manager import ProjectionDrawingManager
 from .pcd_manager import PointCloudManager
 from .projection_controller import ProjectionCorrectionController
 
+
+# Decorator
+def in_labeling_only_decorator(func):
+    """
+    Only execute labeling behavior in labeling usage mode
+    """
+    
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if args[0].in_labeling:
+            return func(*args, **kwargs)
+    
+    return wrapper
+ 
 class Controller:
     MOVEMENT_THRESHOLD = 0.05
 
@@ -41,7 +58,7 @@ class Controller:
             self.drawing_mode = LabelDrawingManager(self.bbox_controller)
         elif self.in_projection:
             self.projection_controller = ProjectionCorrectionController()
-            # TODO 
+            self.drawing_mode = ProjectionDrawingManager(self.projection_controller, self.pcd_manager)
 
         # Drawing states
         self.align_mode = AlignMode(self.pcd_manager)
@@ -60,12 +77,19 @@ class Controller:
     def startup(self, view: "GUI") -> None:
         """Sets the view in all controllers and dependent modules; Loads labels from file."""
         self.view = view
-        self.bbox_controller.set_view(self.view)
+        
+        if self.in_labeling:
+            self.bbox_controller.set_view(self.view)
+            self.bbox_controller.pcd_manager = self.pcd_manager
+        elif self.in_projection:
+            self.projection_controller.set_view(self.view)
+        
         self.pcd_manager.set_view(self.view)
         self.drawing_mode.set_view(self.view)
         self.align_mode.set_view(self.view)
-        self.view.gl_widget.set_bbox_controller(self.bbox_controller)
-        self.bbox_controller.pcd_manager = self.pcd_manager
+        
+        if self.in_labeling:
+            self.view.gl_widget.set_bbox_controller(self.bbox_controller)
 
         # Read labels from folders
         self.pcd_manager.read_pointcloud_folder()
@@ -82,17 +106,22 @@ class Controller:
         if save:
             self.save()
         if self.pcd_manager.pcds_left():
-            previous_bboxes = self.bbox_controller.bboxes
-            self.pcd_manager.get_next_pcd()
-            self.reset()
-            self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())   
+            if self.in_labeling:
+                previous_bboxes = self.bbox_controller.bboxes
+                self.pcd_manager.get_next_pcd()
+                self.reset()
+                self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())   
 
-            if not self.bbox_controller.bboxes and config.getboolean(
-                "LABEL", "propagate_labels"
-            ):
-                self.bbox_controller.set_bboxes(previous_bboxes)
-            self.bbox_controller.set_active_bbox(0)
-
+                if not self.bbox_controller.bboxes and config.getboolean(
+                    "LABEL", "propagate_labels"
+                ):
+                    self.bbox_controller.set_bboxes(previous_bboxes)
+                self.bbox_controller.set_active_bbox(0)
+            elif self.in_projection:
+                previous_points = self.projection_controller.points
+                self.pcd_manager.get_next_pcd()
+                self.reset()
+                self.projection_controller.set_points([]) # TODO
         else:
             self.view.update_progress(len(self.pcd_manager.pcds))
             self.view.button_next_pcd.setEnabled(False)
@@ -102,17 +131,24 @@ class Controller:
         if self.pcd_manager.current_id > 0:
             self.pcd_manager.get_prev_pcd()
             self.reset()
-            self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())
-            self.bbox_controller.set_active_bbox(0)
+            if self.in_labeling:
+                self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())
+                self.bbox_controller.set_active_bbox(0)
+            elif self.in_projection:
+                self.projection_controller.set_points([]) # TODO
+                self.projection_controller.set_active_point(0)
 
     def custom_pcd(self, custom: int) -> None:
         self.save()
         self.pcd_manager.get_custom_pcd(custom)
         self.reset()
-        self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())
+        if self.in_labeling:
+            self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())
+        elif self.in_projection:
+            self.projection_controller.set_points([]) # TODO
 
     # CONTROL METHODS
-    def save(self) -> None:
+    def save(self) -> None: # TODO Add save behavior for projection mode
         """Saves all bounding boxes and optionally segmentation labels in the label file."""
         self.pcd_manager.save_labels_into_file(self.bbox_controller.bboxes)
 
@@ -122,7 +158,11 @@ class Controller:
 
     def reset(self) -> None:
         """Resets the controllers and bounding boxes from the current screen."""
-        self.bbox_controller.reset()
+        if self.in_labeling:
+            self.bbox_controller.reset()
+        elif self.in_projection:
+            self.projection_controller.reset()
+        
         self.drawing_mode.reset()
         self.align_mode.reset()
 
@@ -136,6 +176,7 @@ class Controller:
                 self.curr_cursor_pos.y(),
             )
 
+    @in_labeling_only_decorator
     def set_selected_side(self) -> None:
         """Sets the currently hovered bounding box side in the glWidget."""
         if (
@@ -169,11 +210,9 @@ class Controller:
             self.view.gl_widget.selected_side_vertices = np.array([])
             self.view.status_manager.clear_message(Context.SIDE_HOVERED)
 
-    # EVENT PROCESSING
-    def mouse_clicked(self, a0: QtGui.QMouseEvent) -> None:
+    def mouse_clicked_labeling(self, a0 : QtGui.QMouseEvent) -> None:
         """Triggers actions when the user clicks the mouse."""
         self.last_cursor_pos = a0.pos()
-
         if (
             self.drawing_mode.is_active()
             and (a0.buttons() & Keys.LeftButton)
@@ -188,18 +227,47 @@ class Controller:
 
         elif self.selected_side:
             self.side_mode = True
+    
+    def mouse_clicked_projection(self, a0 : QtGui.QMouseEvent) -> None:
+        """Triggers actions when the user clicks the mouse in projection usage mode"""
+        self.last_cursor_pos = a0.pos()
+        if (
+            self.drawing_mode.is_active()
+            and (a0.buttons() & Keys.LeftButton)
+            and (not self.ctrl_pressed)
+        ):
+            self.drawing_mode.register_point_3d(a0.x(), a0.y(), correction=True)
+            
+        elif self.align_mode.is_active and (not self.ctrl_pressed):
+            self.align_mode.register_point(
+                self.view.gl_widget.get_world_coords(a0.x(), a0.y(), correction=False)
+            )
+        
 
+    def mouse_clicked(self, a0 : QtGui.QMouseEvent) -> None:
+        if self.in_labeling:
+            self.mouse_clicked_labeling(a0)
+        elif self.in_projection:
+            self.mouse_clicked_projection(a0)
+        
+
+    @in_labeling_only_decorator
     def mouse_double_clicked(self, a0: QtGui.QMouseEvent) -> None:
         """Triggers actions when the user double clicks the mouse."""
         self.bbox_controller.select_bbox_by_ray(a0.x(), a0.y())
 
     def mouse_move_event(self, a0: QtGui.QMouseEvent) -> None:
-        """Triggers actions when the user moves the mouse."""
+        """Triggers actions when the user moves the mouse"""
         self.curr_cursor_pos = a0.pos()  # Updates the current mouse cursor position
 
         # Methods that use absolute cursor position
         if self.drawing_mode.is_active() and (not self.ctrl_pressed):
-            self.drawing_mode.register_point(
+            if self.in_labeling:
+                self.drawing_mode.register_point(
+                    a0.x(), a0.y(), correction=True, is_temporary=True
+                )
+            elif self.in_projection:
+                self.drawing_mode.register_point_3d(
                 a0.x(), a0.y(), correction=True, is_temporary=True
             )
 
@@ -218,6 +286,7 @@ class Controller:
                 self.ctrl_pressed
                 and (not self.drawing_mode.is_active())
                 and (not self.align_mode.is_active)
+                and (self.in_labeling)
             ):
                 if a0.buttons() & Keys.LeftButton:  # bbox rotation
                     self.bbox_controller.rotate_with_mouse(-dx, -dy)
@@ -241,7 +310,7 @@ class Controller:
                 else:
                     self.scroll_mode = False
         self.last_cursor_pos = a0.pos()
-
+    
     def mouse_scroll_event(self, a0: QtGui.QWheelEvent) -> None:
         """Triggers actions when the user scrolls the mouse wheel."""
         if self.selected_side:
@@ -418,6 +487,7 @@ class Controller:
             # select bboxes with 1-9 digit keys
             self.bbox_controller.set_active_bbox(int(a0.key()) - 49)
 
+    @in_labeling_only_decorator
     def select_relative_class(self, step: int):
         if step == 0:
             return
@@ -426,6 +496,7 @@ class Controller:
         self.bbox_controller.get_active_bbox().set_classname(new_class)  # type: ignore
         self.bbox_controller.update_all()  # updates UI in SelectBox
 
+    @in_labeling_only_decorator
     def select_relative_bbox(self, step: int):
         if step == 0:
             return

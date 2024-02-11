@@ -38,8 +38,8 @@ class ProjectionCorrectionController(object):
     
     def __init__(self) -> None:
         self.view: GUI
-        self.points: List[PointPairCamera]
         self.pcd_manger: PointCloudManager
+        self.points: List[PointPairCamera] = []
         self.active_point_id = -1 # -1 means zero point pairs
         
     def has_active_point(self) -> bool:
