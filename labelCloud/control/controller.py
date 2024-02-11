@@ -17,9 +17,9 @@ from ..labeling_strategies import PickingStrategy
 from .alignmode import AlignMode
 from .bbox_controller import BoundingBoxController
 from .config_manager import config
-from .drawing_manager import DrawingManager
+from .drawing_manager import LabelDrawingManager
 from .pcd_manager import PointCloudManger
-
+from .projection_controller import ProjectionCorrectionController
 
 class Controller:
     MOVEMENT_THRESHOLD = 0.05
@@ -28,10 +28,22 @@ class Controller:
         """Initializes all controllers and managers."""
         self.view: "GUI"
         self.pcd_manager = PointCloudManger()
-        self.bbox_controller = BoundingBoxController()
+
+        usage_mode = config.get("FILE", "usage_mode")
+
+        usage_mode = usage_mode.replace("\"", "")
+
+        self.in_labeling = (usage_mode == "label")
+        self.in_projection = (usage_mode == "projection")    
+        
+        if self.in_labeling:
+            self.bbox_controller = BoundingBoxController()
+            self.drawing_mode = LabelDrawingManager(self.bbox_controller)
+        elif self.in_projection:
+            self.projection_controller = ProjectionCorrectionController()
+            # TODO 
 
         # Drawing states
-        self.drawing_mode = DrawingManager(self.bbox_controller, self.pcd_manager)
         self.align_mode = AlignMode(self.pcd_manager)
 
         # Control states

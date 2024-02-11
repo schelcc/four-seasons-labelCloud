@@ -12,7 +12,6 @@ import numpy as np
 
 from ..definitions import Mode, Camera
 from ..definitions.types import PointPairCamera, Point2D, Point3D
-from ..model.point import BBox
 from ..utils import oglhelper
 from .config_manager import config
 from .pcd_manager import PointCloudManger

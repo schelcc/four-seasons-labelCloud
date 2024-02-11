@@ -11,7 +11,7 @@ from PyQt5 import QtGui, QtOpenGL
 from ..control.alignmode import AlignMode
 from ..control.bbox_controller import BoundingBoxController
 from ..control.config_manager import config
-from ..control.drawing_manager import DrawingManager
+from ..control.drawing_manager import LabelDrawingManager
 from ..control.pcd_manager import PointCloudManger
 from ..definitions.types import Color4f, Point2D
 from ..utils import oglhelper
@@ -53,7 +53,7 @@ class GLWidget(QtOpenGL.QGLWidget):
         self.crosshair_pos: Point2D = (0, 0)
         self.crosshair_col: Color4f = (0, 1, 0, 1)
         self.selected_side_vertices: npt.NDArray = np.array([])
-        self.drawing_mode: DrawingManager = None  # type: ignore
+        self.drawing_mode: LabelDrawingManager = None  # type: ignore
         self.align_mode: Union[AlignMode, None] = None
 
     def set_pointcloud_controller(self, pcd_manager: PointCloudManger) -> None:
