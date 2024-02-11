@@ -30,6 +30,7 @@ from ..io.pointclouds import BasePointCloudHandler
 from ..labeling_strategies import PickingStrategy, SpanningStrategy
 from ..proj_correction_strategies import PointMatchCorrection
 from ..model.point_cloud import PointCloud
+from ..utils.decorators import in_labeling_only_decorator, in_projection_only_decorator
 from .settings_dialog import SettingsDialog  # type: ignore
 from .startup.dialog import StartupDialog
 from .status_manager import StatusManager
@@ -504,12 +505,17 @@ class GUI(QtWidgets.QMainWindow):
             self.controller.mouse_double_clicked(event)
             return True
         
-        elif (event.type() == QEvent.MouseButtonPress) and ( # MOUSE SINGLE CLICK
+        elif (event.type() == QEvent.MouseButtonPress) and ( # MOUSE SINGLE CLICK - NOT ON IMAGE
             event_object == self.gl_widget
         ):
             self.controller.mouse_clicked(event)
             if self.in_labeling:
                 self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+
+        elif (event.type() == QEvent.MouseButtonPress) and (
+            event_object == self.images_parent
+        ):
+            self.controller.image_clicked(event)
 
         elif (event.type() == QEvent.MouseButtonPress) and ( # ???
             event_object != self.current_class_dropdown

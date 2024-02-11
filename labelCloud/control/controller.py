@@ -23,21 +23,9 @@ from .drawing_manager import LabelDrawingManager
 from .drawing_manager import ProjectionDrawingManager
 from .pcd_manager import PointCloudManager
 from .projection_controller import ProjectionCorrectionController
+from ..utils.decorators import in_labeling_only_decorator, in_projection_only_decorator
 
 
-# Decorator
-def in_labeling_only_decorator(func):
-    """
-    Only execute labeling behavior in labeling usage mode
-    """
-    
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if args[0].in_labeling:
-            return func(*args, **kwargs)
-    
-    return wrapper
- 
 class Controller:
     MOVEMENT_THRESHOLD = 0.05
 
@@ -243,6 +231,8 @@ class Controller:
                 self.view.gl_widget.get_world_coords(a0.x(), a0.y(), correction=False)
             )
         
+    def image_clicked(self, a0 : QtGui.QMouseEvent) -> None:
+        print("img click")
 
     def mouse_clicked(self, a0 : QtGui.QMouseEvent) -> None:
         if self.in_labeling:
