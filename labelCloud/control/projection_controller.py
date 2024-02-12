@@ -54,12 +54,11 @@ class ProjectionCorrectionController(object):
     def set_view(self, view: "GUI") -> None:
         self.view = view
 
-    # TODO : self.view gives access to gui, can use for updating lists and whatnot
-        
     def add_point(self, point_pair: PointPairCamera) -> None:
         #if isinstance(point_pair, PointPairCamera):
         self.points.append(point_pair)
-        self.set_active_point(self.points.index(point_pair))
+        #self.set_active_point(self.points.index(point_pair))
+        self.set_active_point(-1)
         
     def update_point(self, point_id: int, point_pair: PointPairCamera) -> None:
         if isinstance(point_pair, PointPairCamera) and (0 <= point_id < len(self.points)):
@@ -85,7 +84,7 @@ class ProjectionCorrectionController(object):
     def set_points(self, points: List[PointPairCamera]):
         self.points = points
         self.deselect_point()
-        self.update_label_list()
+        self.update_point_list()
         
     def reset(self) -> None:
         self.deselect_point()
@@ -110,9 +109,16 @@ class ProjectionCorrectionController(object):
     
     def update_all(self) -> None:
         """Update all various variable displays"""
-        self.update_label_list()
+        self.update_point_list()
         
-    def update_label_list(self) -> None:
-        # TODO
-        pass
-        
+    def update_point_list(self) -> None:
+        self.view.point_list.blockSignals(True)
+        self.view.point_list.clear()
+        for point in self.points:
+            self.view.point_list.addItem("Point")
+        if self.has_active_point():
+            self.view.point_list.setCurrentRow(self.active_point_id)
+            current_item = self.view.point_list.currentItem()
+            if current_item:
+                current_item.setSelected(True)
+        self.view.point_list.blockSignals(False) 
