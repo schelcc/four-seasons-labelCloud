@@ -144,11 +144,14 @@ class Controller:
     # CONTROL METHODS
     def save(self) -> None: # TODO Add save behavior for projection mode
         """Saves all bounding boxes and optionally segmentation labels in the label file."""
-        self.pcd_manager.save_labels_into_file(self.bbox_controller.bboxes)
+        if self.in_labeling:
+            self.pcd_manager.save_labels_into_file(self.bbox_controller.bboxes)
 
-        if LabelConfig().type == LabelingMode.SEMANTIC_SEGMENTATION:
-            assert self.pcd_manager.pointcloud is not None
-            self.pcd_manager.pointcloud.save_segmentation_labels()
+            if LabelConfig().type == LabelingMode.SEMANTIC_SEGMENTATION:
+                assert self.pcd_manager.pointcloud is not None
+                self.pcd_manager.pointcloud.save_segmentation_labels()
+        elif self.in_projection:
+            pass
 
     def reset(self) -> None:
         """Resets the controllers and bounding boxes from the current screen."""
