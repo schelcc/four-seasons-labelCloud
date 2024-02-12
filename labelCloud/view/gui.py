@@ -492,14 +492,20 @@ class GUI(QtWidgets.QMainWindow):
             self.controller.key_release_event(event)
 
         # Mouse Events
-        elif (event.type() == QEvent.MouseMove):
+        if (event.type() == QEvent.MouseMove):
             if (event_object == self.gl_widget): # MOUSE MOVE
                 self.controller.mouse_move_event(event)
                 if self.in_labeling:
                     self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
-            elif (event_object in self.image_label_list):
-                self.draw_image_cursor((event.x(), event.y()), self.image_label_list.index(event_object))
-                
+            if (event_object in self.image_label_list):
+                idx = self.image_label_list.index(event_object)
+                for cam, manager in enumerate(self.image_manager_list):
+                    manager.cursor_pos = (event.x(), event.y()) if cam == idx else None 
+                    if cam == idx: manager.render()
+            else:
+                for cam, manager in enumerate(self.image_manager_list):
+                    manager.cursor_pos = None 
+                 
         elif (event.type() == QEvent.Wheel) and (event_object == self.gl_widget): # MOUSE SCROLL
             self.controller.mouse_scroll_event(event)
             if self.in_labeling:
@@ -630,7 +636,7 @@ class GUI(QtWidgets.QMainWindow):
     def init_2d_image(self):
         """Searches for a 2D image with the point cloud name and displays it in a new window."""
         for lbl in self.image_manager_list:
-            lbl.set_new_image_by_pcd()
+            lbl.load_image()
             lbl.render()
 #
 #        self.current_pixmaps = []

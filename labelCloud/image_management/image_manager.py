@@ -37,6 +37,9 @@ class SingleImageManager:
         self.current_path : Optional[str] = None
         self.draw_queue = []
         self.label = label
+        self.render_queue = []
+        self.base_image : Optional[QPixmap] = None
+        self.cursor_pos : Optional[Point2D] = None
     
     def set_view(self, view : "GUI") -> None:
         self.view = view
@@ -44,26 +47,35 @@ class SingleImageManager:
     def set_camera(self, camera : Camera) -> None:
         self.camera = camera
 
- 
     def load_image(self) -> None:
         """Refresh "image_path" to reflect current image"""
-        pass
-    
-    def render(self) -> None:
-        """Perform queued draw actions"""
+        self.refresh_image_path()
+
         if self.current_path is None:
             return
 
         img = QtGui.QImage(QtGui.QImageReader(str(self.current_path)).read())      
         pixmap = QPixmap.fromImage(img)
         pixmap = pixmap.scaledToWidth(1024)
-        
+    
         pixmap = pixmap.transformed(QtGui.QTransform().scale(0.50, 0.50))
+        self.base_image = pixmap.copy()
+
+    def render(self) -> None:
+        """Perform queued draw actions"""
+        
+        if self.base_image is None:
+            return
+        
+        pixmap = self.base_image.copy() 
+         
+        self.draw_cursor(pixmap) 
+         
         self.label.setPixmap(pixmap)
         self.label.update()
         self.label.show()
     
-    def set_new_image_by_pcd(self) -> None:
+    def refresh_image_path(self) -> None:
         """Set new image name by a pcd path"""
         pcd_name = self.view.controller.pcd_manager.pcd_path.stem 
         postfix_length = len(self.view.controller.pcd_manager.pcd_postfix) - 4
@@ -72,4 +84,22 @@ class SingleImageManager:
     
     def register_click(self) -> None:
         print(f"Camera {self.camera} clicked") 
+
+    def draw_cursor(self, pixmap : QPixmap) -> None:
+        if self.cursor_pos is None:
+            return
+
+        color = QtCore.Qt.red
+        thickness = 2
+        line_type = QtCore.Qt.SolidLine
+        scale = 1.5
         
+        painter = QPainter(pixmap)
+        painter.setPen(QPen(color, thickness, line_type))
+
+        x, y = self.cursor_pos
+        
+        painter.drawLine(x-5*scale, y, x+5*scale, y)
+        painter.drawLine(x, y-5*scale, x, y+5*scale)
+
+        painter.end()
