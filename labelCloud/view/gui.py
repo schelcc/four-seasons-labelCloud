@@ -547,141 +547,18 @@ class GUI(QtWidgets.QMainWindow):
         dialog = SettingsDialog(self)
         dialog.exec()
 
-    def draw_bboxes(self, width, height, P_matrix, pixelmap, cam_number : int, margin): # TODO type
-        pass
-#        all_bboxes = self.controller.bbox_controller.bboxes
-#        active_bbox_idx = self.controller.bbox_controller.active_bbox_id
-#
-#        # Draw all bboxes in red
-#        for idx, bbox in enumerate(all_bboxes):
-#
-#            corners = np.array([[-1,-1,-1],
-#                [-1,1,-1],
-#                [-1,1,1],
-#                [-1,-1,1],
-#                [1,-1,-1],
-#                [1,1,-1],
-#                [1,1,1],
-#                [1,-1,1]]).astype(np.float64)
-#            
-#            thickness = 2
-#            color = QtCore.Qt.blue
-#            
-#            # print(f"{idx} : ({bbox.center})")
-#            
-#            if self.controller.bbox_controller.has_active_bbox and \
-#                idx == self.controller.bbox_controller.active_bbox_id:
-#                    thickness = 3
-#                    color = QtCore.Qt.green
-#            
-#            corners[:,0] *= bbox.length/2.0
-#            corners[:,1] *= bbox.width/2.0
-#            corners[:,2] *= bbox.height/2.0
-#            angle = bbox.z_rotation/180.0*np.pi
-#            Rz = np.array([[np.cos(angle),-np.sin(angle),0],[np.sin(angle),np.cos(angle),0],[0,0,1]])
-#            corners = np.transpose(np.matmul(Rz, np.transpose(corners, (1,0))), (1,0))   
-#            corners[:,0] += bbox.center[0]
-#            corners[:,1] += bbox.center[1]
-#            corners[:,2] += bbox.center[2]
-#            pts_homo = np.ones((corners.shape[0], 4))
-#            pts_homo[:,0:3] = corners
-#            P = P_matrix[cam_number]
-#            pts_img = np.matmul(P, pts_homo.transpose()).transpose()
-#            if np.any(pts_img[:, 2] < 0):
-#                continue
-#            pts_img[:,0] /= pts_img[:,2]
-#            pts_img[:,1] /= pts_img[:,2]   
-#            x = pts_img[:,0]
-#            y = pts_img[:,1]
-#            x_mean = np.mean(x)
-#            y_mean = np.mean(y)
-#
-#            if not (x_mean<-margin or x_mean>width+margin or y_mean<-margin or y_mean>height+margin):
-#                painter = QPainter(pixelmap)
-#                painter.setPen(QPen(color, thickness, QtCore.Qt.DashLine))
-#                for m in range(4):
-#                    n = (m+1)%4
-#                    painter.drawLine(x[m],y[m],x[n],y[n])
-#                    painter.drawLine(x[m+4],y[m+4],x[n+4],y[n+4])
-#                    painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
-#                painter.end()
-
     def init_2d_image(self):
         """Searches for a 2D image with the point cloud name and displays it in a new window."""
         for lbl in self.image_manager_list:
             lbl.load_image()
             lbl.render()
-#
-#        self.current_pixmaps = []
-#
-#        # Look for image files with the name of the point cloud
-#        if not len(self.controller.pcd_manager.pcds):
-#            return
-#            
-#        pcd_name = self.controller.pcd_manager.pcd_path.stem
-#        postfix_length = len(self.controller.pcd_manager.pcd_postfix)-4
-#        file_name = pcd_name[:-postfix_length]
-#
-#        for i in range(len(self.cam_list)):
-#            image_path = str(self.controller.pcd_manager.pcd_folder.absolute())+'/'+file_name+self.cam_list[i]
-#            if not os.path.exists(image_path):
-#                print('No Enough Image! Skip this.')
-#                return
-#            
+            
 ##        P_matrix = config.getlist("FILE", "pmatrix_list")
 ##        P_matrix = np.array(P_matrix).reshape(-1,3,4)
 ##        margin = 100
-#        
-#        for i in range(len(self.cam_list)):
-#            image_path = str(self.controller.pcd_manager.pcd_folder.absolute())+'/'+file_name+self.cam_list[i]
-#            image = QtGui.QImage(QtGui.QImageReader(str(image_path)).read())
-#            pixelmap = QPixmap.fromImage(image)
-#            pixelmap = pixelmap.scaledToWidth(1024)
-#                
-#            width, height = 1024, 768
-#
-##            if self.in_labeling:            
-##               self.draw_bboxes(width, height, P_matrix, pixelmap, i, margin) 
-##            elif self.in_projection:
-##                self.draw_points(i, pixelmap)
-##            
-#            # Scale down the image size
-#            pixelmap = pixelmap.transformed(QtGui.QTransform().scale(0.50, 0.50))
-#
-#            self.current_pixmaps.append(pixelmap)
-#            
-#            self.image_label_list[i].setPixmap(pixelmap)
-#            self.image_label_list[i].update()                     
 #            self.image_label_list[i].show()
-    
-    def show_2d_image(self):
-        pass
-#        for label in self.image_label_list:
-#            label.update()
-#            label.show()
-            
-    def draw_image_cursor(self, point : Point2D, camera : Union[Camera, int],
-        scale : int = 1) -> None:
-        pass
-#        pixmap = self.current_pixmaps[camera]
-#        
-#        color = QtCore.Qt.gray 
-#        thickness = 1
-#        
-#        painter = QPainter(pixmap)
-#        painter.setPen(QPen(color, thickness, QtCore.Qt.DashLine))
-#
-#        x, y = point
-#
-#        painter.drawLine(x-5*scale, y, x+5*scale, y)
-#        painter.drawLine(x, y-5*scale, x, y+5*scale)
-#        painter.end()
-#        
-#        self.image_label_list[camera].setPixmap(pixmap)
-#        self.image_label_list[camera].update()
-#        self.image_label_list[camera].show()
-#        
-#
+   
+
     def show_no_pointcloud_dialog(
         self, pcd_folder: Path, pcd_extensions: Set[str]
     ) -> None:
