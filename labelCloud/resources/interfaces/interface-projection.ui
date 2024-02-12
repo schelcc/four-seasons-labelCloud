@@ -538,6 +538,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="button_complete_selection">
+        <property name="text">
+         <string>Complete Selection</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="button_save_label">
         <property name="text">
          <string>Save Calibration</string>

@@ -40,8 +40,10 @@ class PointMatchCorrection(BaseProjCorrection):
         self.point_3d = new_point
         
     def register_point_2d(self, new_point: Point2D, new_cam: Camera) -> None:
+        print("Point2d registered")
         self.point_2d = new_point
         self.camera = new_cam
+         
         
     def register_tmp_point(self, new_point: Point3D) -> None:
         self.tmp_p3d = new_point
@@ -49,12 +51,22 @@ class PointMatchCorrection(BaseProjCorrection):
     def register_tmp_point_2d(self, new_point: Point2D, new_cam: Camera) -> None:
         self.tmp_p2d = new_point
 
+    def get_point_pair(self) -> Optional[PointPairCamera]:
+        if self.can_finish():
+            return (self.point_3d, self.point_2d, self.camera)
+        else:
+            return None
+
+    def can_finish(self) -> bool:
+        return (self.point_3d is not None) and (self.point_2d is not None) and (self.camera is not None)
+
     def draw_preview(self) -> None:
         if self.point_3d is None and self.tmp_p3d is not None:
             ogl.draw_points([self.tmp_p3d], color=(0, 1, 0, 1))
         elif self.point_3d is not None:
             ogl.draw_points([self.point_3d], color=(0, 1, 0, 1), point_size=10)
             ogl.draw_crosshair(self.point_3d[0], self.point_3d[1], self.point_3d[2], color=(0, 1, 0, 1), scale=20)
+        
     
     def reset(self) -> None:
         self.point_3d = None

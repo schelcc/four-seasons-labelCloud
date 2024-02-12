@@ -64,3 +64,7 @@ class ProjectionDrawingManager(BaseDrawingManager):
     ) -> None:
         if self.drawing_strategy is not None:
             self.drawing_strategy.register_point_2d((x, y), camera) 
+
+    def finish(self) -> None:
+        if self.drawing_strategy is not None:
+            self.point_controller.add_point(self.drawing_strategy.get_point_pair())

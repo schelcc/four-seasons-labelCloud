@@ -16,6 +16,7 @@ from ..io.labels.config import LabelConfig
 from ..utils import oglhelper
 from ..view.gui import GUI
 from ..labeling_strategies import PickingStrategy
+from ..image_management.image_manager import SingleImageManager
 from .alignmode import AlignMode
 from .bbox_controller import BoundingBoxController
 from .config_manager import config
@@ -45,8 +46,8 @@ class Controller:
             self.bbox_controller = BoundingBoxController()
             self.drawing_mode = LabelDrawingManager(self.bbox_controller)
         elif self.in_projection:
-            self.projection_controller = ProjectionCorrectionController()
-            self.drawing_mode = ProjectionDrawingManager(self.projection_controller, self.pcd_manager)
+            self.point_controller = ProjectionCorrectionController()
+            self.drawing_mode = ProjectionDrawingManager(self.point_controller, self.pcd_manager)
 
         # Drawing states
         self.align_mode = AlignMode(self.pcd_manager)
@@ -70,7 +71,7 @@ class Controller:
             self.bbox_controller.set_view(self.view)
             self.bbox_controller.pcd_manager = self.pcd_manager
         elif self.in_projection:
-            self.projection_controller.set_view(self.view)
+            self.point_controller.set_view(self.view)
         
         self.pcd_manager.set_view(self.view)
         self.drawing_mode.set_view(self.view)
@@ -82,6 +83,8 @@ class Controller:
         # Read labels from folders
         self.pcd_manager.read_pointcloud_folder()
         self.next_pcd(save=False)
+
+        self.view.init_2d_image()
 
     def loop_gui(self) -> None:
         """Function collection called during each event loop iteration."""
@@ -106,10 +109,10 @@ class Controller:
                     self.bbox_controller.set_bboxes(previous_bboxes)
                 self.bbox_controller.set_active_bbox(0)
             elif self.in_projection:
-                previous_points = self.projection_controller.points
+                previous_points = self.point_controller.points
                 self.pcd_manager.get_next_pcd()
                 self.reset()
-                self.projection_controller.set_points([]) # TODO
+                self.point_controller.set_points([]) # TODO
         else:
             self.view.update_progress(len(self.pcd_manager.pcds))
             self.view.button_next_pcd.setEnabled(False)
@@ -123,8 +126,8 @@ class Controller:
                 self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())
                 self.bbox_controller.set_active_bbox(0)
             elif self.in_projection:
-                self.projection_controller.set_points([]) # TODO
-                self.projection_controller.set_active_point(0)
+                self.point_controller.set_points([]) # TODO
+                self.point_controller.set_active_point(0)
 
     def custom_pcd(self, custom: int) -> None:
         self.save()
@@ -133,7 +136,7 @@ class Controller:
         if self.in_labeling:
             self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())
         elif self.in_projection:
-            self.projection_controller.set_points([]) # TODO
+            self.point_controller.set_points([]) # TODO
 
     # CONTROL METHODS
     def save(self) -> None: # TODO Add save behavior for projection mode
@@ -149,7 +152,7 @@ class Controller:
         if self.in_labeling:
             self.bbox_controller.reset()
         elif self.in_projection:
-            self.projection_controller.reset()
+            self.point_controller.reset()
         
         self.drawing_mode.reset()
         self.align_mode.reset()
@@ -232,16 +235,11 @@ class Controller:
             )
     
     def image_clicked(self, a0 : QtGui.QMouseEvent, which_image) -> None:
-        camera : Optional[Camera] = None
+        camera : Camera = self.view.image_label_list.index(which_image)
+        manager : SingleImageManager = self.view.image_manager_list[camera]
         
-        if which_image == self.view.image_label_list[0]:
-            camera = Camera.LEFT
-        elif which_image == self.view.image_label_list[1]:
-            camera = Camera.MIDDLE
-        elif which_image == self.view.image_label_list[2]:
-            camera = Camera.RIGHT
-
-        self.drawing_mode.register_point_2d(a0.x(), a0.y(), camera)
+        #self.drawing_mode.register_point_2d(a0.x(), a0.y(), camera)
+        manager.register_click()
 
     def mouse_clicked(self, a0 : QtGui.QMouseEvent) -> None:
         if self.in_labeling:
@@ -258,6 +256,13 @@ class Controller:
     def mouse_move_event(self, a0: QtGui.QMouseEvent) -> None:
         """Triggers actions when the user moves the mouse"""
         self.curr_cursor_pos = a0.pos()  # Updates the current mouse cursor position
+
+        if self.in_projection:
+            if self.drawing_mode.is_active() \
+            and self.drawing_mode.drawing_strategy.can_finish():
+                self.view.button_complete_selection.setDisabled(False) 
+            else:
+                self.view.button_complete_selection.setDisabled(True)
 
         # Methods that use absolute cursor position
         if self.drawing_mode.is_active() and (not self.ctrl_pressed):

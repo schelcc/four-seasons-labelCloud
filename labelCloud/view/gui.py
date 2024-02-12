@@ -7,7 +7,7 @@ import copy
 import shutil
 import traceback
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, Set
+from typing import TYPE_CHECKING, Optional, Set, Union
 
 import pkg_resources
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
@@ -24,13 +24,15 @@ from PyQt5.QtWidgets import (
 )
 
 from ..control.config_manager import config
-from ..definitions import Color3f, LabelingMode
+from ..definitions import Color3f, LabelingMode, Camera
+from ..definitions.types import Point2D
 from ..io.labels.config import LabelConfig
 from ..io.pointclouds import BasePointCloudHandler
 from ..labeling_strategies import PickingStrategy, SpanningStrategy
 from ..proj_correction_strategies import PointMatchCorrection
 from ..model.point_cloud import PointCloud
 from ..utils.decorators import in_labeling_only_decorator, in_projection_only_decorator
+from ..image_management.image_manager import SingleImageManager
 from .settings_dialog import SettingsDialog  # type: ignore
 from .startup.dialog import StartupDialog
 from .status_manager import StatusManager
@@ -130,6 +132,10 @@ class GUI(QtWidgets.QMainWindow):
         self.in_projection = (usage_mode == "projection")        
         
         logging.info(f"Usage mode is {usage_mode}")
+
+        # TODO Add image cursor to draw crosshairs, 
+        # then we can do automatic point-match completion when sufficient
+        # points are selected (eliminating drawing preview for it)
          
         uic.loadUi(
             pkg_resources.resource_filename(
@@ -194,6 +200,8 @@ class GUI(QtWidgets.QMainWindow):
         self.button_span_bbox: QtWidgets.QPushButton
         self.button_save_label: QtWidgets.QPushButton
 
+        self.button_complete_selection: QtWidgets.QPushButton
+
         self.label_list: QtWidgets.QListWidget
         self.current_class_dropdown: QtWidgets.QComboBox
         self.button_deselect_label: QtWidgets.QPushButton
@@ -239,11 +247,23 @@ class GUI(QtWidgets.QMainWindow):
         self.camera_right: QtWidgets.QLabel
         self.camera_middle: QtWidgets.QLabel
 
+        self.manager_camera_left: SingleImageManager = SingleImageManager(self.camera_left)
+        self.manager_camera_middle: SingleImageManager = SingleImageManager(self.camera_middle)
+        self.manager_camera_right: SingleImageManager = SingleImageManager(self.camera_right)
+
         self.image_label_list = [
             self.camera_left,
             self.camera_middle,
             self.camera_right,
         ]
+        
+        self.image_manager_list = [
+            self.manager_camera_left,
+            self.manager_camera_middle,
+            self.manager_camera_right,
+        ]
+        
+        self.current_pixmaps = []
 
         self.camera_label: QtWidgets.QLabel
         self.camera_title_label: QtWidgets.QLabel
@@ -282,6 +302,12 @@ class GUI(QtWidgets.QMainWindow):
             self.button_assign_label.setVisible(False)
             self.act_color_with_label.setVisible(False)
 
+        if self.in_projection:
+            self.button_complete_selection.setDisabled(True)
+            # Init camera objects
+            for idx, item in enumerate(self.image_manager_list):
+                item.set_view(self)
+                item.set_camera(idx)
 
         # Connect with controller
         self.controller.startup(self)
@@ -296,10 +322,8 @@ class GUI(QtWidgets.QMainWindow):
     def connect_events(self) -> None:
         # POINTCLOUD CONTROL
         self.button_next_pcd.clicked.connect(lambda: self.controller.next_pcd(save=True))
-        self.button_next_pcd.clicked.connect(lambda: self.show_2d_image())
 
         self.button_prev_pcd.clicked.connect(self.controller.prev_pcd)
-        self.button_prev_pcd.clicked.connect(lambda: self.show_2d_image())
 
         self.button_set_pcd.pressed.connect(lambda: self.ask_custom_index())
 
@@ -325,34 +349,24 @@ class GUI(QtWidgets.QMainWindow):
         self.button_save_label.clicked.connect(self.controller.save)
 
         if self.in_labeling: 
-            self.button_show_image.pressed.connect(lambda: self.show_2d_image())
             
             self.button_bbox_up.pressed.connect(lambda: self.controller.bbox_controller.translate_along_z())
-            self.button_bbox_up.pressed.connect(lambda: self.show_2d_image())
 
             self.button_bbox_down.pressed.connect(lambda: self.controller.bbox_controller.translate_along_z(down=True))
-            self.button_bbox_down.pressed.connect(lambda: self.show_2d_image())
 
             self.button_bbox_left.pressed.connect(lambda: self.controller.bbox_controller.translate_along_x(left=True))
-            self.button_bbox_left.pressed.connect(lambda: self.show_2d_image())
 
             self.button_bbox_right.pressed.connect(self.controller.bbox_controller.translate_along_x)
-            self.button_bbox_right.pressed.connect(lambda: self.show_2d_image())
 
             self.button_bbox_forward.pressed.connect(lambda: self.controller.bbox_controller.translate_along_y(forward=True))
-            self.button_bbox_forward.pressed.connect(lambda: self.show_2d_image())
 
             self.button_bbox_backward.pressed.connect(lambda: self.controller.bbox_controller.translate_along_y())
-            self.button_bbox_backward.pressed.connect(lambda: self.show_2d_image())
 
             self.dial_bbox_z_rotation.valueChanged.connect(lambda x: self.controller.bbox_controller.rotate_around_z(x, absolute=True))
-            self.dial_bbox_z_rotation.valueChanged.connect(lambda: self.show_2d_image())
 
             self.button_bbox_decrease_dimension.clicked.connect(lambda: self.controller.bbox_controller.scale(decrease=True))
-            self.button_bbox_decrease_dimension.clicked.connect(lambda: self.show_2d_image())
 
             self.button_bbox_increase_dimension.clicked.connect(lambda: self.controller.bbox_controller.scale())
-            self.button_bbox_increase_dimension.clicked.connect(lambda: self.show_2d_image())
 
 
             # LABELING CONTROL
@@ -361,13 +375,10 @@ class GUI(QtWidgets.QMainWindow):
             )
 
             self.button_deselect_label.clicked.connect(self.controller.bbox_controller.deselect_bbox)
-            self.button_deselect_label.clicked.connect(lambda: self.show_2d_image())
 
             self.button_delete_label.clicked.connect(self.controller.bbox_controller.delete_current_bbox)
-            self.button_delete_label.clicked.connect(lambda: self.show_2d_image())
 
             self.label_list.currentRowChanged.connect(self.controller.bbox_controller.set_active_bbox)
-            self.label_list.currentRowChanged.connect(lambda: self.show_2d_image())
 
             self.button_assign_label.clicked.connect(
                 self.controller.bbox_controller.assign_point_label_in_active_box
@@ -375,7 +386,6 @@ class GUI(QtWidgets.QMainWindow):
 
             # context menu
             self.act_delete_class.triggered.connect(self.controller.bbox_controller.delete_current_bbox)
-            self.act_delete_class.triggered.connect(lambda: self.show_2d_image())
 
             self.act_crop_pointcloud_inside.triggered.connect(
                 self.controller.crop_pointcloud_inside_active_bbox
@@ -436,6 +446,10 @@ class GUI(QtWidgets.QMainWindow):
                     PointMatchCorrection(self)
                 )
             )
+
+            self.button_complete_selection.clicked.connect(
+                lambda: self.controller.drawing_mode.finish()
+            )
             
             
            
@@ -478,10 +492,13 @@ class GUI(QtWidgets.QMainWindow):
             self.controller.key_release_event(event)
 
         # Mouse Events
-        elif (event.type() == QEvent.MouseMove) and (event_object == self.gl_widget): # MOUSE MOVE
-            self.controller.mouse_move_event(event)
-            if self.in_labeling:
-                self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+        elif (event.type() == QEvent.MouseMove):
+            if (event_object == self.gl_widget): # MOUSE MOVE
+                self.controller.mouse_move_event(event)
+                if self.in_labeling:
+                    self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+            elif (event_object in self.image_label_list):
+                self.draw_image_cursor((event.x(), event.y()), self.image_label_list.index(event_object))
                 
         elif (event.type() == QEvent.Wheel) and (event_object == self.gl_widget): # MOUSE SCROLL
             self.controller.mouse_scroll_event(event)
@@ -497,7 +514,6 @@ class GUI(QtWidgets.QMainWindow):
         elif (event.type() == QEvent.MouseButtonPress) and ( # MOUSE SINGLE CLICK - NOT ON IMAGE
             event_object == self.gl_widget
         ):
-            self.show_2d_image()
             self.controller.mouse_clicked(event)
             if self.in_labeling:
                 self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
@@ -527,106 +543,166 @@ class GUI(QtWidgets.QMainWindow):
         dialog.exec()
 
     def draw_bboxes(self, width, height, P_matrix, pixelmap, cam_number : int, margin): # TODO type
-        all_bboxes = self.controller.bbox_controller.bboxes
-        active_bbox_idx = self.controller.bbox_controller.active_bbox_id
-
-        # Draw all bboxes in red
-        for idx, bbox in enumerate(all_bboxes):
-
-            corners = np.array([[-1,-1,-1],
-                [-1,1,-1],
-                [-1,1,1],
-                [-1,-1,1],
-                [1,-1,-1],
-                [1,1,-1],
-                [1,1,1],
-                [1,-1,1]]).astype(np.float64)
-            
-            thickness = 2
-            color = QtCore.Qt.blue
-            
-            # print(f"{idx} : ({bbox.center})")
-            
-            if self.controller.bbox_controller.has_active_bbox and \
-                idx == self.controller.bbox_controller.active_bbox_id:
-                    thickness = 3
-                    color = QtCore.Qt.green
-            
-            corners[:,0] *= bbox.length/2.0
-            corners[:,1] *= bbox.width/2.0
-            corners[:,2] *= bbox.height/2.0
-            angle = bbox.z_rotation/180.0*np.pi
-            Rz = np.array([[np.cos(angle),-np.sin(angle),0],[np.sin(angle),np.cos(angle),0],[0,0,1]])
-            corners = np.transpose(np.matmul(Rz, np.transpose(corners, (1,0))), (1,0))   
-            corners[:,0] += bbox.center[0]
-            corners[:,1] += bbox.center[1]
-            corners[:,2] += bbox.center[2]
-            pts_homo = np.ones((corners.shape[0], 4))
-            pts_homo[:,0:3] = corners
-            P = P_matrix[cam_number]
-            pts_img = np.matmul(P, pts_homo.transpose()).transpose()
-            if np.any(pts_img[:, 2] < 0):
-                continue
-            pts_img[:,0] /= pts_img[:,2]
-            pts_img[:,1] /= pts_img[:,2]   
-            x = pts_img[:,0]
-            y = pts_img[:,1]
-            x_mean = np.mean(x)
-            y_mean = np.mean(y)
-
-            if not (x_mean<-margin or x_mean>width+margin or y_mean<-margin or y_mean>height+margin):
-                painter = QPainter(pixelmap)
-                painter.setPen(QPen(color, thickness, QtCore.Qt.DashLine))
-                for m in range(4):
-                    n = (m+1)%4
-                    painter.drawLine(x[m],y[m],x[n],y[n])
-                    painter.drawLine(x[m+4],y[m+4],x[n+4],y[n+4])
-                    painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
-                painter.end()
-
-    def draw_points(self):
         pass
+#        all_bboxes = self.controller.bbox_controller.bboxes
+#        active_bbox_idx = self.controller.bbox_controller.active_bbox_id
+#
+#        # Draw all bboxes in red
+#        for idx, bbox in enumerate(all_bboxes):
+#
+#            corners = np.array([[-1,-1,-1],
+#                [-1,1,-1],
+#                [-1,1,1],
+#                [-1,-1,1],
+#                [1,-1,-1],
+#                [1,1,-1],
+#                [1,1,1],
+#                [1,-1,1]]).astype(np.float64)
+#            
+#            thickness = 2
+#            color = QtCore.Qt.blue
+#            
+#            # print(f"{idx} : ({bbox.center})")
+#            
+#            if self.controller.bbox_controller.has_active_bbox and \
+#                idx == self.controller.bbox_controller.active_bbox_id:
+#                    thickness = 3
+#                    color = QtCore.Qt.green
+#            
+#            corners[:,0] *= bbox.length/2.0
+#            corners[:,1] *= bbox.width/2.0
+#            corners[:,2] *= bbox.height/2.0
+#            angle = bbox.z_rotation/180.0*np.pi
+#            Rz = np.array([[np.cos(angle),-np.sin(angle),0],[np.sin(angle),np.cos(angle),0],[0,0,1]])
+#            corners = np.transpose(np.matmul(Rz, np.transpose(corners, (1,0))), (1,0))   
+#            corners[:,0] += bbox.center[0]
+#            corners[:,1] += bbox.center[1]
+#            corners[:,2] += bbox.center[2]
+#            pts_homo = np.ones((corners.shape[0], 4))
+#            pts_homo[:,0:3] = corners
+#            P = P_matrix[cam_number]
+#            pts_img = np.matmul(P, pts_homo.transpose()).transpose()
+#            if np.any(pts_img[:, 2] < 0):
+#                continue
+#            pts_img[:,0] /= pts_img[:,2]
+#            pts_img[:,1] /= pts_img[:,2]   
+#            x = pts_img[:,0]
+#            y = pts_img[:,1]
+#            x_mean = np.mean(x)
+#            y_mean = np.mean(y)
+#
+#            if not (x_mean<-margin or x_mean>width+margin or y_mean<-margin or y_mean>height+margin):
+#                painter = QPainter(pixelmap)
+#                painter.setPen(QPen(color, thickness, QtCore.Qt.DashLine))
+#                for m in range(4):
+#                    n = (m+1)%4
+#                    painter.drawLine(x[m],y[m],x[n],y[n])
+#                    painter.drawLine(x[m+4],y[m+4],x[n+4],y[n+4])
+#                    painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
+#                painter.end()
 
-    def show_2d_image(self):
+    def draw_points(self, cam_idx, pixmap):
+        pass
+#        all_pts = self.controller.point_controller.points
+#        active_point_idx = self.controller.point_controller.active_point_id
+#
+#        thickness = 3
+#        
+#        for idx, point in enumerate(all_pts):
+#            p3d, p2d, camera = point
+#            
+#            if camera != cam_idx:
+#                print(f"skip, currently on {cam_idx} and the point is for {camera}")
+#                continue
+#            
+#             
+#            color = QtCore.Qt.green if idx == active_point_idx else QtCore.Qt.blue
+#            
+#            painter = QPainter(pixelmap)
+#            painter.setPen(QPen(color, thickness, QtCore.Qt.DashDotDotLine))
+#
+#            x, y = p2d
+#            painter.drawPoint(x, y)
+#            painter.end()
+#            
+            
+
+    def init_2d_image(self):
         """Searches for a 2D image with the point cloud name and displays it in a new window."""
-
-        # Look for image files with the name of the point cloud
-        if not len(self.controller.pcd_manager.pcds):
-            return
+        for lbl in self.image_manager_list:
+            lbl.set_new_image_by_pcd()
+            lbl.render()
+#
+#        self.current_pixmaps = []
+#
+#        # Look for image files with the name of the point cloud
+#        if not len(self.controller.pcd_manager.pcds):
+#            return
+#            
+#        pcd_name = self.controller.pcd_manager.pcd_path.stem
+#        postfix_length = len(self.controller.pcd_manager.pcd_postfix)-4
+#        file_name = pcd_name[:-postfix_length]
+#
+#        for i in range(len(self.cam_list)):
+#            image_path = str(self.controller.pcd_manager.pcd_folder.absolute())+'/'+file_name+self.cam_list[i]
+#            if not os.path.exists(image_path):
+#                print('No Enough Image! Skip this.')
+#                return
+#            
+##        P_matrix = config.getlist("FILE", "pmatrix_list")
+##        P_matrix = np.array(P_matrix).reshape(-1,3,4)
+##        margin = 100
+#        
+#        for i in range(len(self.cam_list)):
+#            image_path = str(self.controller.pcd_manager.pcd_folder.absolute())+'/'+file_name+self.cam_list[i]
+#            image = QtGui.QImage(QtGui.QImageReader(str(image_path)).read())
+#            pixelmap = QPixmap.fromImage(image)
+#            pixelmap = pixelmap.scaledToWidth(1024)
+#                
+#            width, height = 1024, 768
+#
+##            if self.in_labeling:            
+##               self.draw_bboxes(width, height, P_matrix, pixelmap, i, margin) 
+##            elif self.in_projection:
+##                self.draw_points(i, pixelmap)
+##            
+#            # Scale down the image size
+#            pixelmap = pixelmap.transformed(QtGui.QTransform().scale(0.50, 0.50))
+#
+#            self.current_pixmaps.append(pixelmap)
+#            
+#            self.image_label_list[i].setPixmap(pixelmap)
+#            self.image_label_list[i].update()                     
+#            self.image_label_list[i].show()
+    
+    def show_2d_image(self):
+        pass
+#        for label in self.image_label_list:
+#            label.update()
+#            label.show()
             
-        pcd_name = self.controller.pcd_manager.pcd_path.stem
-        postfix_length = len(self.controller.pcd_manager.pcd_postfix)-4
-        file_name = pcd_name[:-postfix_length]
-
-        for i in range(len(self.cam_list)):
-            image_path = str(self.controller.pcd_manager.pcd_folder.absolute())+'/'+file_name+self.cam_list[i]
-            if not os.path.exists(image_path):
-                print('No Enough Image! Skip this.')
-                return
-            
-        P_matrix = config.getlist("FILE", "pmatrix_list")
-        P_matrix = np.array(P_matrix).reshape(-1,3,4)
-        margin = 100
-        
-        for i in range(len(self.cam_list)):
-            image_path = str(self.controller.pcd_manager.pcd_folder.absolute())+'/'+file_name+self.cam_list[i]
-            image = QtGui.QImage(QtGui.QImageReader(str(image_path)).read())
-            pixelmap = QPixmap.fromImage(image)
-            pixelmap = pixelmap.scaledToWidth(1024)
-                
-            width, height = 1024, 768
-
-            if self.in_labeling:            
-               self.draw_bboxes(width, height, P_matrix, pixelmap, i, margin) 
-            
-            # Scale down the image size
-            pixelmap = pixelmap.transformed(QtGui.QTransform().scale(0.50, 0.50))
-            
-            self.image_label_list[i].setPixmap(pixelmap)
-            self.image_label_list[i].update()                     
-            self.image_label_list[i].show()
-            
-
+    def draw_image_cursor(self, point : Point2D, camera : Union[Camera, int],
+        scale : int = 1) -> None:
+        pass
+#        pixmap = self.current_pixmaps[camera]
+#        
+#        color = QtCore.Qt.gray 
+#        thickness = 1
+#        
+#        painter = QPainter(pixmap)
+#        painter.setPen(QPen(color, thickness, QtCore.Qt.DashLine))
+#
+#        x, y = point
+#
+#        painter.drawLine(x-5*scale, y, x+5*scale, y)
+#        painter.drawLine(x, y-5*scale, x, y+5*scale)
+#        painter.end()
+#        
+#        self.image_label_list[camera].setPixmap(pixmap)
+#        self.image_label_list[camera].update()
+#        self.image_label_list[camera].show()
+#        
+#
     def show_no_pointcloud_dialog(
         self, pcd_folder: Path, pcd_extensions: Set[str]
     ) -> None:
@@ -681,16 +757,13 @@ class GUI(QtWidgets.QMainWindow):
             self.edit_rot_z.setText(str(round(bbox.get_z_rotation(), 1)))
 
             self.label_volume.setText(str(round(bbox.get_volume(), viewing_precision)))
-        if self.bbox_previous is None and bbox:
-            self.show_2d_image()
-        if self.bbox_previous is not None and bbox:
+#        if self.bbox_previous is not None and bbox:
             # change check
-            if (self.bbox_previous.center != bbox.center 
-                or self.bbox_previous.height != bbox.height
-                or self.bbox_previous.width != bbox.width
-                or self.bbox_previous.length != bbox.length
-                or self.bbox_previous.z_rotation != bbox.z_rotation):
-                self.show_2d_image()
+#            if (self.bbox_previous.center != bbox.center 
+#                or self.bbox_previous.height != bbox.height
+#                or self.bbox_previous.width != bbox.width
+#                or self.bbox_previous.length != bbox.length
+#                or self.bbox_previous.z_rotation != bbox.z_rotation):
 
 
     def update_bbox_parameter(self, parameter: str) -> None:
