@@ -77,6 +77,9 @@ class SingleImageManager:
         
         if self.view.in_projection and self.drawing_mode.is_active():
             self.draw_cursor(pixmap) 
+        
+        if self.view.in_projection:
+            self.draw_pts(pixmap)
          
         self.label.setPixmap(pixmap)
         self.label.update()
@@ -92,21 +95,50 @@ class SingleImageManager:
     def register_click(self) -> None:
         print(f"Camera {self.camera} clicked") 
 
+    def draw_crosshairs(self,
+        point: Point2D,
+        pixmap : QPixmap,
+        color = QtCore.Qt.gray,
+        thickness = 1,
+        scale = 1,
+        line_type = QtCore.Qt.SolidLine ) -> None:
+        
+        painter = QPainter(pixmap)
+        painter.setPen(QPen(color, thickness, line_type))
+        
+        x, y = point
+        
+        painter.drawLine(x-5*scale, y, x+5*scale, y)
+        painter.drawLine(x, y-5*scale, x, y+5*scale) 
+        
+        painter.end()
+
     def draw_cursor(self, pixmap : QPixmap) -> None:
         if self.cursor_pos is None:
             return
 
-        color = QtCore.Qt.red
-        thickness = 2
-        line_type = QtCore.Qt.SolidLine
-        scale = 1.5
+        self.draw_crosshairs(
+            self.cursor_pos,
+            pixmap,
+            color=QtCore.Qt.red,
+            thickness=1,
+            scale=2,
+            line_type=QtCore.Qt.DashLine
+        )            
+            
+    def draw_pts(self, pixmap : QPixmap, thickness : int = 3) -> None:
+        all_pts = self.view.controller.point_controller.points
         
-        painter = QPainter(pixmap)
-        painter.setPen(QPen(color, thickness, line_type))
+        if len(all_pts) == 0: 
+            return
 
-        x, y = self.cursor_pos
+        active_pt = self.view.controller.point_controller.active_point_id
         
-        painter.drawLine(x-5*scale, y, x+5*scale, y)
-        painter.drawLine(x, y-5*scale, x, y+5*scale)
+        for idx, pt in enumerate(all_pts):
+            _, p2d, cam = pt
+            
+            if cam != self.camera: continue        
 
-        painter.end()
+            color = QtCore.Qt.green if idx == active_pt else QtCore.Qt.blue
+           
+            self.draw_crosshairs(p2d, pixmap, color=color, thickness=thickness)

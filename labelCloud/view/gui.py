@@ -606,32 +606,6 @@ class GUI(QtWidgets.QMainWindow):
 #                    painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
 #                painter.end()
 
-    def draw_points(self, cam_idx, pixmap):
-        pass
-#        all_pts = self.controller.point_controller.points
-#        active_point_idx = self.controller.point_controller.active_point_id
-#
-#        thickness = 3
-#        
-#        for idx, point in enumerate(all_pts):
-#            p3d, p2d, camera = point
-#            
-#            if camera != cam_idx:
-#                print(f"skip, currently on {cam_idx} and the point is for {camera}")
-#                continue
-#            
-#             
-#            color = QtCore.Qt.green if idx == active_point_idx else QtCore.Qt.blue
-#            
-#            painter = QPainter(pixelmap)
-#            painter.setPen(QPen(color, thickness, QtCore.Qt.DashDotDotLine))
-#
-#            x, y = p2d
-#            painter.drawPoint(x, y)
-#            painter.end()
-#            
-            
-
     def init_2d_image(self):
         """Searches for a 2D image with the point cloud name and displays it in a new window."""
         for lbl in self.image_manager_list:
