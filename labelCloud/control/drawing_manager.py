@@ -47,24 +47,31 @@ class ProjectionDrawingManager(BaseDrawingManager):
     def register_point_3d(
         self, x: float, y: float, correction: bool = False, is_temporary: bool = False 
     ) -> None:
-        assert self.drawing_strategy is not None 
+        if self.drawing_strategy is None:
+            return
+        
         world_point = self.view.gl_widget.get_world_coords(x, y, correction=correction)
         world_point = self.pcd_manager.discretize_pt(world_point, replace_color=(1., 1., 1.,))
         
         if is_temporary:
             self.drawing_strategy.register_tmp_point(world_point)
         else:
-            if not self.drawing_strategy.hold_3d():
-                self.drawing_strategy.register_point(world_point)
-            if (self.drawing_strategy.is_finished()):
-                pass # TODO Saving calibration things 
+            self.drawing_strategy.register_point(world_point)
+            
+        if self.drawing_strategy.is_finished():
+            self.finish() 
 
     def register_point_2d(
         self, x: float, y: float, camera: Camera
     ) -> None:
-        if self.drawing_strategy is not None:
-            self.drawing_strategy.register_point_2d((x, y), camera) 
+        if self.drawing_strategy is None:
+            return None
+        
+        self.drawing_strategy.register_point_2d((x, y), camera) 
+        if (self.drawing_strategy.is_finished()):
+            self.finish()
 
     def finish(self) -> None:
         if self.drawing_strategy is not None:
-            self.point_controller.add_point(self.drawing_strategy.get_point_pair())
+            self.point_controller.add_point(self.drawing_strategy.get_complete_point())
+            self.drawing_strategy = None

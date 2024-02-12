@@ -244,7 +244,7 @@ class Controller:
         camera : Camera = self.view.image_label_list.index(which_image)
         manager : SingleImageManager = self.view.image_manager_list[camera]
         
-        #self.drawing_mode.register_point_2d(a0.x(), a0.y(), camera)
+        self.drawing_mode.register_point_2d(a0.x(), a0.y(), camera)
         manager.register_click()
 
     def mouse_clicked(self, a0 : QtGui.QMouseEvent) -> None:
@@ -264,12 +264,7 @@ class Controller:
         self.curr_cursor_pos = a0.pos()  # Updates the current mouse cursor position
 
         if self.in_projection:
-            if self.drawing_mode.is_active() \
-            and self.drawing_mode.drawing_strategy.can_finish():
-                self.view.button_complete_selection.setDisabled(False) 
-            else:
-                self.view.button_complete_selection.setDisabled(True)
-
+            self.view.button_complete_selection.setVisible(False)
         # Methods that use absolute cursor position
         if self.drawing_mode.is_active() and (not self.ctrl_pressed):
             if self.in_labeling:

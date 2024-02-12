@@ -481,10 +481,10 @@ class GUI(QtWidgets.QMainWindow):
             self.point_list if self.in_projection else self,
         ]:
             if self.in_labeling:
-                self.controller.key_press_event(event)
                 self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
             if self.in_projection:
                 pass
+            self.controller.key_press_event(event)
             return True  # TODO: Recheck pyqt behaviour
 
         elif event.type() == QEvent.KeyRelease:

@@ -70,8 +70,6 @@ class SingleImageManager:
         self.base_image = pixmap.copy()
 
     def render(self) -> None:
-        """Perform queued draw actions"""
-        
         if self.base_image is None or self.view is None or self.drawing_mode is None:
             return
         

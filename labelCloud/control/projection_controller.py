@@ -57,9 +57,9 @@ class ProjectionCorrectionController(object):
     # TODO : self.view gives access to gui, can use for updating lists and whatnot
         
     def add_point(self, point_pair: PointPairCamera) -> None:
-        if isinstance(point_pair, PointPairCamera):
-            self.points.append(point_pair)
-            self.set_active_point(self.points.index(point_pair))
+        #if isinstance(point_pair, PointPairCamera):
+        self.points.append(point_pair)
+        self.set_active_point(self.points.index(point_pair))
         
     def update_point(self, point_id: int, point_pair: PointPairCamera) -> None:
         if isinstance(point_pair, PointPairCamera) and (0 <= point_id < len(self.points)):
