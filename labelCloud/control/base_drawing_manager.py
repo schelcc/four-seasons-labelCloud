@@ -48,4 +48,5 @@ class BaseDrawingManager(object):
     def reset(self, points_only : bool = False) -> None:
         if self.is_active():
             self.drawing_strategy.reset()
+            self.drawing_strategy = None
             
