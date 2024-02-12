@@ -150,35 +150,11 @@ class GUI(QtWidgets.QMainWindow):
             )
         )        
 
-
-        # Image List (LXH)
-        self.bbox_previous = None
-        self.cam_list = config.getlist("FILE", "image_list")
-        self.imageLabelList = []
-        self.images_parent = QtWidgets.QWidget()
-        self.image_layout = QtWidgets.QHBoxLayout(self.images_parent)
-
-
-        for i in range(len(self.cam_list)):
-            imageLabel = QLabel()
-            imageLabel.setWindowTitle(f"2D Image ({self.cam_list[i]})")
-            imageLabel.setScaledContents(True)
-            self.imageLabelList.append(imageLabel)
-        for img_label in self.imageLabelList:
-            self.image_layout.addWidget(img_label)
-
-        # MENU BAR
-        # File
+        # Files
         self.act_set_pcd_folder: QtWidgets.QAction
         self.act_set_label_folder: QtWidgets.QAction
-
-        # Labels
-        self.act_delete_all_labels: QtWidgets.QAction
-        self.act_set_default_class: QtWidgets.QMenu
-        self.actiongroup_default_class = QActionGroup(self.act_set_default_class)
-        self.act_propagate_labels: QtWidgets.QAction
-
-        # Settings
+        
+        # MENU BAR 
         self.act_z_rotation_only: QtWidgets.QAction
         self.act_color_with_label: QtWidgets.QAction
         self.act_show_floor: QtWidgets.QAction
@@ -187,97 +163,106 @@ class GUI(QtWidgets.QMainWindow):
         self.act_align_pcd: QtWidgets.QAction
         self.act_change_settings: QtWidgets.QAction
 
-        # STATUS BAR
         self.status_bar: QtWidgets.QStatusBar
         self.status_manager = StatusManager(self.status_bar)
 
-        # CENTRAL WIDGET
         self.gl_widget: GLWidget
 
-        # LEFT PANEL
-        # point cloud management
         self.label_current_pcd: QtWidgets.QLabel
         self.button_prev_pcd: QtWidgets.QPushButton
         self.button_next_pcd: QtWidgets.QPushButton
         self.button_set_pcd: QtWidgets.QPushButton
         self.progressbar_pcds: QtWidgets.QProgressBar
 
-        if self.in_labeling:
+        #if self.in_labeling:
+        self.act_delete_all_labels: QtWidgets.QAction
+        self.act_set_default_class: QtWidgets.QMenu
+        self.actiongroup_default_class = QActionGroup(self.act_set_default_class)
+        self.act_propagate_labels: QtWidgets.QAction
             # bbox control section
-            self.button_bbox_up: QtWidgets.QPushButton
-            self.button_bbox_down: QtWidgets.QPushButton
-            self.button_bbox_left: QtWidgets.QPushButton
-            self.button_bbox_right: QtWidgets.QPushButton
-            self.button_bbox_forward: QtWidgets.QPushButton
-            self.button_bbox_backward: QtWidgets.QPushButton
-            self.dial_bbox_z_rotation: QtWidgets.QDial
-            self.button_bbox_decrease_dimension: QtWidgets.QPushButton
-            self.button_bbox_increase_dimension: QtWidgets.QPushButton
+        self.button_bbox_up: QtWidgets.QPushButton
+        self.button_bbox_down: QtWidgets.QPushButton
+        self.button_bbox_left: QtWidgets.QPushButton
+        self.button_bbox_right: QtWidgets.QPushButton
+        self.button_bbox_forward: QtWidgets.QPushButton
+        self.button_bbox_backward: QtWidgets.QPushButton
+        self.dial_bbox_z_rotation: QtWidgets.QDial
+        self.button_bbox_decrease_dimension: QtWidgets.QPushButton
+        self.button_bbox_increase_dimension: QtWidgets.QPushButton
 
-        # 2d image viewer
-        self.button_show_image: QtWidgets.QPushButton
-        # self.button_show_image.setVisible(
-        #     config.getboolean("USER_INTERFACE", "show_2d_image")
-        # )
-        
-        if self.in_projection: 
-            # correction mode selection
-            self.button_point_match: QtWidgets.QPushButton
+        self.button_pick_bbox: QtWidgets.QPushButton
+        self.button_span_bbox: QtWidgets.QPushButton
+        self.button_save_label: QtWidgets.QPushButton
 
-        if self.in_labeling:
-            # label mode selection
-            self.button_pick_bbox: QtWidgets.QPushButton
-            self.button_span_bbox: QtWidgets.QPushButton
-            self.button_save_label: QtWidgets.QPushButton
-
-        # RIGHT PANEL
         self.label_list: QtWidgets.QListWidget
         self.current_class_dropdown: QtWidgets.QComboBox
         self.button_deselect_label: QtWidgets.QPushButton
         self.button_delete_label: QtWidgets.QPushButton
         self.button_assign_label: QtWidgets.QPushButton
 
-        # label list actions
-        # self.act_rename_class = QtWidgets.QAction("Rename class") #TODO: Implement!
         self.act_change_class_color = QtWidgets.QAction("Change class color")
         self.act_delete_class = QtWidgets.QAction("Delete label")
         self.act_crop_pointcloud_inside = QtWidgets.QAction("Save points inside as")
-        self.label_list.addActions(
-            [
-                self.act_change_class_color,
-                self.act_delete_class,
-                self.act_crop_pointcloud_inside,
-            ]
-        )
-        self.label_list.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
-
-        # BOUNDING BOX PARAMETER EDITS
-        self.edit_pos_x: QtWidgets.QLineEdit
-        self.edit_pos_y: QtWidgets.QLineEdit
-        self.edit_pos_z: QtWidgets.QLineEdit
-
-        self.edit_length: QtWidgets.QLineEdit
-        self.edit_width: QtWidgets.QLineEdit
-        self.edit_height: QtWidgets.QLineEdit
-
-        self.edit_rot_x: QtWidgets.QLineEdit
-        self.edit_rot_y: QtWidgets.QLineEdit
-        self.edit_rot_z: QtWidgets.QLineEdit
-
-        self.all_line_edits = [
-            self.edit_pos_x,
-            self.edit_pos_y,
-            self.edit_pos_z,
-            self.edit_length,
-            self.edit_width,
-            self.edit_height,
-            self.edit_rot_x,
-            self.edit_rot_y,
-            self.edit_rot_z,
-        ]
+        
+        # BOUNDING BOX PARAMETER EDITS 
+        # TODO Fix
+#        self.edit_pos_x: QtWidgets.QLineEdit
+#        self.edit_pos_y: QtWidgets.QLineEdit
+#        self.edit_pos_z: QtWidgets.QLineEdit
+#
+#        self.edit_length: QtWidgets.QLineEdit
+#        self.edit_width: QtWidgets.QLineEdit
+#        self.edit_height: QtWidgets.QLineEdit
+#
+#        self.edit_rot_x: QtWidgets.QLineEdit
+#        self.edit_rot_y: QtWidgets.QLineEdit
+#        self.edit_rot_z: QtWidgets.QLineEdit
+#
+#        self.all_line_edits = [
+#            self.edit_pos_x,
+#            self.edit_pos_y,
+#            self.edit_pos_z,
+#            self.edit_length,
+#            self.edit_width,
+#            self.edit_height,
+#            self.edit_rot_x,
+#            self.edit_rot_y,
+#            self.edit_rot_z,
+#        ]
 
         self.label_volume: QtWidgets.QLabel
 
+        #elif self.in_projection:
+        self.button_point_match: QtWidgets.QPushButton
+
+        self.camera_left: QtWidgets.QLabel
+        self.camera_right: QtWidgets.QLabel
+        self.camera_middle: QtWidgets.QLabel
+
+        self.image_label_list = [
+            self.camera_left,
+            self.camera_middle,
+            self.camera_right,
+        ]
+
+        self.camera_label: QtWidgets.QLabel
+        self.camera_title_label: QtWidgets.QLabel
+
+        self.point2d_label_x: QtWidgets.QLabel
+        self.point2d_label_y: QtWidgets.QLabel
+        self.point2d_title_label: QtWidgets.QLabel
+
+        self.point3d_label_x: QtWidgets.QLabel
+        self.point3d_label_y: QtWidgets.QLabel
+        self.point3d_label_z: QtWidgets.QLabel
+        self.point3d_title_label: QtWidgets.QLabel
+
+        self.point_list: QtWidgets.QListWidget
+            #self.point_list.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
+
+
+        self.cam_list = config.getlist("FILE", "image_list")
+        
         self.controller = control
         self.controller.pcd_manager.pcd_postfix = config.get("POINTCLOUD", "pointcloud_postfix") # LXH
 
@@ -292,9 +277,11 @@ class GUI(QtWidgets.QMainWindow):
         else:
             sys.exit()
         # Segmentation only functionalities
-        if LabelConfig().type == LabelingMode.OBJECT_DETECTION:
+        if LabelConfig().type == LabelingMode.OBJECT_DETECTION \
+            and self.in_labeling:
             self.button_assign_label.setVisible(False)
             self.act_color_with_label.setVisible(False)
+
 
         # Connect with controller
         self.controller.startup(self)
@@ -314,8 +301,32 @@ class GUI(QtWidgets.QMainWindow):
         self.button_prev_pcd.clicked.connect(self.controller.prev_pcd)
         self.button_prev_pcd.clicked.connect(lambda: self.show_2d_image())
 
+        self.button_set_pcd.pressed.connect(lambda: self.ask_custom_index())
+
+        self.act_change_class_color.triggered.connect(self.change_label_color)
+
+        # open_2D_img
+ 
+        self.act_set_pcd_folder.triggered.connect(self.change_pointcloud_folder)
+        self.act_set_label_folder.triggered.connect(self.change_label_folder)
+        self.actiongroup_default_class.triggered.connect(
+            self.change_default_object_class
+        )
+
+        self.act_propagate_labels.toggled.connect(set_propagate_labels)
+        self.act_z_rotation_only.toggled.connect(set_zrotation_only)
+        self.act_color_with_label.toggled.connect(set_color_with_label)
+        self.act_show_floor.toggled.connect(set_floor_visibility)
+        self.act_show_orientation.toggled.connect(set_orientation_visibility)
+        self.act_save_perspective.toggled.connect(set_keep_perspective)
+        self.act_align_pcd.toggled.connect(self.controller.align_mode.change_activation)
+        self.act_change_settings.triggered.connect(self.show_settings_dialog)
+      
+        self.button_save_label.clicked.connect(self.controller.save)
+
         if self.in_labeling: 
-            # BBOX CONTROL
+            self.button_show_image.pressed.connect(lambda: self.show_2d_image())
+            
             self.button_bbox_up.pressed.connect(lambda: self.controller.bbox_controller.translate_along_z())
             self.button_bbox_up.pressed.connect(lambda: self.show_2d_image())
 
@@ -331,9 +342,6 @@ class GUI(QtWidgets.QMainWindow):
             self.button_bbox_forward.pressed.connect(lambda: self.controller.bbox_controller.translate_along_y(forward=True))
             self.button_bbox_forward.pressed.connect(lambda: self.show_2d_image())
 
-        self.button_set_pcd.pressed.connect(lambda: self.ask_custom_index())
-
-        if self.in_labeling:
             self.button_bbox_backward.pressed.connect(lambda: self.controller.bbox_controller.translate_along_y())
             self.button_bbox_backward.pressed.connect(lambda: self.show_2d_image())
 
@@ -373,20 +381,6 @@ class GUI(QtWidgets.QMainWindow):
                 self.controller.crop_pointcloud_inside_active_bbox
             )
 
-        self.act_change_class_color.triggered.connect(self.change_label_color)
-
-        # open_2D_img
-        self.button_show_image.pressed.connect(lambda: self.show_2d_image())
-       
-        if self.in_projection: 
-            # CORRECTION CONTROL
-            self.button_point_match.clicked.connect(
-                lambda: self.controller.drawing_mode.set_drawing_strategy(
-                    PointMatchCorrection(self)
-                )
-            )
-
-        if self.in_labeling:
             # LABEL CONTROL
             self.button_pick_bbox.clicked.connect(
                 lambda: self.controller.drawing_mode.set_drawing_strategy(
@@ -399,9 +393,7 @@ class GUI(QtWidgets.QMainWindow):
                 )
             )
 
-        self.button_save_label.clicked.connect(self.controller.save)
 
-        if self.in_labeling:
             # BOUNDING BOX PARAMETER
             self.edit_pos_x.editingFinished.connect(
                 lambda: self.update_bbox_parameter("pos_x")
@@ -433,27 +425,20 @@ class GUI(QtWidgets.QMainWindow):
                 lambda: self.update_bbox_parameter("rot_z")
             )
 
-        # MENU BAR
-        self.act_set_pcd_folder.triggered.connect(self.change_pointcloud_folder)
-        self.act_set_label_folder.triggered.connect(self.change_label_folder)
-        self.actiongroup_default_class.triggered.connect(
-            self.change_default_object_class
-        )
-
-        if self.in_labeling:
             self.act_delete_all_labels.triggered.connect(
                 self.controller.bbox_controller.reset
             )
+         
+        if self.in_projection: 
+            # CORRECTION CONTROL
+            self.button_point_match.clicked.connect(
+                lambda: self.controller.drawing_mode.set_drawing_strategy(
+                    PointMatchCorrection(self)
+                )
+            )
             
-        self.act_propagate_labels.toggled.connect(set_propagate_labels)
-        self.act_z_rotation_only.toggled.connect(set_zrotation_only)
-        self.act_color_with_label.toggled.connect(set_color_with_label)
-        self.act_show_floor.toggled.connect(set_floor_visibility)
-        self.act_show_orientation.toggled.connect(set_orientation_visibility)
-        self.act_save_perspective.toggled.connect(set_keep_perspective)
-        self.act_align_pcd.toggled.connect(self.controller.align_mode.change_activation)
-        self.act_change_settings.triggered.connect(self.show_settings_dialog)
-
+            
+           
     def set_checkbox_states(self) -> None:
         self.act_propagate_labels.setChecked(
             config.getboolean("LABEL", "propagate_labels")
@@ -479,11 +464,14 @@ class GUI(QtWidgets.QMainWindow):
         # Keyboard Events
         if (event.type() == QEvent.KeyPress) and event_object in [
             self,
-            self.label_list,  # otherwise steals focus for keyboard shortcuts
+            self.label_list if self.in_labeling else self,
+            self.point_list if self.in_projection else self,
         ]:
             if self.in_labeling:
                 self.controller.key_press_event(event)
                 self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+            if self.in_projection:
+                pass
             return True  # TODO: Recheck pyqt behaviour
 
         elif event.type() == QEvent.KeyRelease:
@@ -509,22 +497,23 @@ class GUI(QtWidgets.QMainWindow):
         elif (event.type() == QEvent.MouseButtonPress) and ( # MOUSE SINGLE CLICK - NOT ON IMAGE
             event_object == self.gl_widget
         ):
+            self.show_2d_image()
             self.controller.mouse_clicked(event)
             if self.in_labeling:
                 self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
 
         elif (event.type() == QEvent.MouseButtonPress) and ( # MOUSE SINGLE CLICK - ON IMAGE
-            event_object == self.images_parent
+            event_object in self.image_label_list
         ):
-            # TODO Recover which image was clicked and ensure we can transfer the qt coords back into px
-            self.controller.image_clicked(event)
+            self.controller.image_clicked(event, event_object)
 
-        elif (event.type() == QEvent.MouseButtonPress) and ( # ???
+        elif (event.type() == QEvent.MouseButtonPress) and (
+            self.in_labeling
+        ) and ( # ???
             event_object != self.current_class_dropdown
         ):
             self.current_class_dropdown.clearFocus()
-            if self.in_labeling:
-                self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+            self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
         return False
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
@@ -595,6 +584,9 @@ class GUI(QtWidgets.QMainWindow):
                     painter.drawLine(x[m],y[m],x[m+4],y[m+4]) 
                 painter.end()
 
+    def draw_points(self):
+        pass
+
     def show_2d_image(self):
         """Searches for a 2D image with the point cloud name and displays it in a new window."""
 
@@ -630,12 +622,10 @@ class GUI(QtWidgets.QMainWindow):
             # Scale down the image size
             pixelmap = pixelmap.transformed(QtGui.QTransform().scale(0.50, 0.50))
             
-            self.imageLabelList[i].setPixmap(pixelmap)
-            self.imageLabelList[i].update()                     
+            self.image_label_list[i].setPixmap(pixelmap)
+            self.image_label_list[i].update()                     
+            self.image_label_list[i].show()
             
-        self.image_layout.update()
-        self.images_parent.update()
-        self.images_parent.show()
 
     def show_no_pointcloud_dialog(
         self, pcd_folder: Path, pcd_extensions: Set[str]

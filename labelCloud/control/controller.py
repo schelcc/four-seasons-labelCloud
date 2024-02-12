@@ -11,7 +11,7 @@ from PyQt5.QtCore import Qt as Keys
 
 from functools import wraps
 
-from ..definitions import BBOX_SIDES, Colors, Context, LabelingMode
+from ..definitions import BBOX_SIDES, Colors, Context, LabelingMode, Camera
 from ..io.labels.config import LabelConfig
 from ..utils import oglhelper
 from ..view.gui import GUI
@@ -230,10 +230,19 @@ class Controller:
             self.align_mode.register_point(
                 self.view.gl_widget.get_world_coords(a0.x(), a0.y(), correction=False)
             )
-        
-    def image_clicked(self, a0 : QtGui.QMouseEvent) -> None:
-        x, y = a0.x(), a0.y()
     
+    def image_clicked(self, a0 : QtGui.QMouseEvent, which_image) -> None:
+        camera : Optional[Camera] = None
+        
+        if which_image == self.view.image_label_list[0]:
+            camera = Camera.LEFT
+        elif which_image == self.view.image_label_list[1]:
+            camera = Camera.MIDDLE
+        elif which_image == self.view.image_label_list[2]:
+            camera = Camera.RIGHT
+
+        self.drawing_mode.register_point_2d(a0.x(), a0.y(), camera)
+
     def mouse_clicked(self, a0 : QtGui.QMouseEvent) -> None:
         if self.in_labeling:
             self.mouse_clicked_labeling(a0)

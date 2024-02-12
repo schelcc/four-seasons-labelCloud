@@ -41,6 +41,7 @@ class PointMatchCorrection(BaseProjCorrection):
         
     def register_point_2d(self, new_point: Point2D, new_cam: Camera) -> None:
         self.point_2d = new_point
+        self.camera = new_cam
         
     def register_tmp_point(self, new_point: Point3D) -> None:
         self.tmp_p3d = new_point

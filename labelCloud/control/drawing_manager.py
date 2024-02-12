@@ -8,6 +8,7 @@ from .base_drawing_manager import BaseDrawingManager
 from .bbox_controller import BoundingBoxController
 from .projection_controller import ProjectionCorrectionController
 from .pcd_manager import PointCloudManager
+from ..definitions import Camera
 
 if TYPE_CHECKING:
     from ..view.gui import GUI
@@ -57,3 +58,9 @@ class ProjectionDrawingManager(BaseDrawingManager):
                 self.drawing_strategy.register_point(world_point)
             if (self.drawing_strategy.is_finished()):
                 pass # TODO Saving calibration things 
+
+    def register_point_2d(
+        self, x: float, y: float, camera: Camera
+    ) -> None:
+        if self.drawing_strategy is not None:
+            self.drawing_strategy.register_point_2d((x, y), camera) 
