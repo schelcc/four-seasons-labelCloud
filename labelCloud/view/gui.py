@@ -247,9 +247,9 @@ class GUI(QtWidgets.QMainWindow):
         self.camera_right: QtWidgets.QLabel
         self.camera_middle: QtWidgets.QLabel
 
-        self.manager_camera_left: SingleImageManager = SingleImageManager(self.camera_left)
-        self.manager_camera_middle: SingleImageManager = SingleImageManager(self.camera_middle)
-        self.manager_camera_right: SingleImageManager = SingleImageManager(self.camera_right)
+        self.manager_camera_left: SingleImageManager = SingleImageManager(self.camera_left, self)
+        self.manager_camera_middle: SingleImageManager = SingleImageManager(self.camera_middle, self)
+        self.manager_camera_right: SingleImageManager = SingleImageManager(self.camera_right, self)
 
         self.image_label_list = [
             self.camera_left,
@@ -306,7 +306,6 @@ class GUI(QtWidgets.QMainWindow):
             self.button_complete_selection.setDisabled(True)
             # Init camera objects
             for idx, item in enumerate(self.image_manager_list):
-                item.set_view(self)
                 item.set_camera(idx)
 
         # Connect with controller
@@ -501,7 +500,7 @@ class GUI(QtWidgets.QMainWindow):
                 idx = self.image_label_list.index(event_object)
                 for cam, manager in enumerate(self.image_manager_list):
                     manager.cursor_pos = (event.x(), event.y()) if cam == idx else None 
-                    if cam == idx: manager.render()
+                    manager.render()
             else:
                 for cam, manager in enumerate(self.image_manager_list):
                     manager.cursor_pos = None 

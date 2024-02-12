@@ -24,15 +24,18 @@ from ..labeling_strategies import PickingStrategy, SpanningStrategy
 from ..proj_correction_strategies import PointMatchCorrection
 from ..model.point_cloud import PointCloud
 from ..utils.decorators import in_labeling_only_decorator, in_projection_only_decorator
+from ..control.base_drawing_manager import BaseDrawingManager
 
 if TYPE_CHECKING:
     from ..control.controller import Controller
+    from ..control.view import GUI
 
 SUFFIXES = ["_top_left_dd.png", "_top_mid_dd.png", "_top_right_dd.png"]
 
 class SingleImageManager:
-    def __init__(self, label : QtWidgets.QLabel):
-        self.view : "GUI"
+    def __init__(self, label : QtWidgets.QLabel, view : "GUI"):
+        self.view : "GUI" = view
+        self.drawing_mode : Optional[BaseDrawingManager] = None
         self.camera : Camera
         self.current_path : Optional[str] = None
         self.draw_queue = []
@@ -40,6 +43,11 @@ class SingleImageManager:
         self.render_queue = []
         self.base_image : Optional[QPixmap] = None
         self.cursor_pos : Optional[Point2D] = None
+
+        # Draw action flags
+        self.do_draw_cursor : bool = False
+        self.do_draw_calib_points : bool = self.view.in_projection
+        self.do_draw_bboxes : bool = self.view.in_labeling
     
     def set_view(self, view : "GUI") -> None:
         self.view = view
@@ -64,12 +72,13 @@ class SingleImageManager:
     def render(self) -> None:
         """Perform queued draw actions"""
         
-        if self.base_image is None:
+        if self.base_image is None or self.view is None or self.drawing_mode is None:
             return
         
         pixmap = self.base_image.copy() 
-         
-        self.draw_cursor(pixmap) 
+        
+        if self.view.in_projection and self.drawing_mode.is_active():
+            self.draw_cursor(pixmap) 
          
         self.label.setPixmap(pixmap)
         self.label.update()

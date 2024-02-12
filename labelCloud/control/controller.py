@@ -72,6 +72,8 @@ class Controller:
             self.bbox_controller.pcd_manager = self.pcd_manager
         elif self.in_projection:
             self.point_controller.set_view(self.view)
+            for manager in self.view.image_manager_list:
+                manager.drawing_mode = self.drawing_mode
             
         
         self.pcd_manager.set_view(self.view)
