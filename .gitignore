@@ -19,6 +19,7 @@
 
 pointclouds/*
 labels/*
+manual_calib/*
 
 !pointclouds/_classes.json
 
