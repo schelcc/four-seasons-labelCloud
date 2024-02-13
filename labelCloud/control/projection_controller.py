@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, List, Optional
 import json
 import yaml
 import os
+from os import path
 import numpy as np
 
 from ..definitions import Mode, Camera, Color4f
@@ -148,11 +149,54 @@ class ProjectionCorrectionController(object):
     def update_camera_readout(self) -> None:
         cams = ["Left", "Middle", "Right"]
         if self.has_active_point():
-            self.view.camera_label.setText(cams[self.get_active_point()[2]])
-                
+            self.view.camera_label.setText(cams[self.get_active_point()[2]])     
 
     def get_points_from_file(self) -> None:
-        pass
+        self.points = []
+        
+        input_folder = config.getpath("FILE", "manual_calib_folder", fallback="manual_calib/")
+        
+        pcd_name = self.view.controller.pcd_manager.pcd_path.name
+        pcd_name = pcd_name.replace("_oust.txt", "")
+        
+        in_path = path.join(input_folder, f"{pcd_name}_points.txt")
+        
+        try:
+            with open(in_path, "r") as f:
+                for line in f.readlines():
+                    l = line.strip()
+                    cam, p3d_x, p3d_y, p3d_z, p2d_x, p2d_y = l.split(',')
+
+                    p3d = (float(p3d_x), float(p3d_y), float(p3d_z))
+                    p2d = (float(p2d_x), float(p2d_y))
+                    cam = int(cam)
+                    
+                    self.points.append((p3d, p2d, cam))
+
+                    self.set_active_point(0)
+        except:
+            logging.info("Error loading points, file may not exist or may be formatted incorrectly")
+
 
     def save_points_to_file(self) -> None:
-        pass
+        if len(self.points) == 0:
+            return
+        
+        output_folder = config.getpath("FILE", "manual_calib_folder", fallback="manual_calib/")
+        
+        # get sample name
+        pcd_name = self.view.controller.pcd_manager.pcd_path.name
+        pcd_name = pcd_name.replace("_oust.txt", "")
+
+        out_path = path.join(output_folder, f"{pcd_name}_points.txt")
+        
+        out_fp = open(out_path, "w")
+        
+        out_str = ""
+        for pt in self.points:
+            p3d, p2d, cam = pt
+            out_str += f"{str(cam)},{p3d[0]},{p3d[1]},{p3d[2]},{p2d[0]},{p2d[1]}\n"
+
+        out_fp.write(out_str)
+        out_fp.close()
+        logging.info(f"Saved points to {out_path}")

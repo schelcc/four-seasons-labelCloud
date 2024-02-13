@@ -115,11 +115,10 @@ class Controller:
                 self.bbox_controller.set_active_bbox(0)
 
             elif self.in_projection:
-                previous_points = self.point_controller.points
                 self.pcd_manager.get_next_pcd()
                 self.reset()
+                self.point_controller.get_points_from_file()
                 self.view.init_2d_image()
-                self.point_controller.set_points([]) # TODO
 
         else:
             self.view.update_progress(len(self.pcd_manager.pcds))
@@ -135,8 +134,7 @@ class Controller:
                 self.bbox_controller.set_active_bbox(0)
             elif self.in_projection:
                 self.view.init_2d_image()
-                self.point_controller.set_points([]) # TODO
-                self.point_controller.set_active_point(0)
+                self.point_controller.get_points_from_file()
 
     def custom_pcd(self, custom: int) -> None:
         self.save()
@@ -158,7 +156,7 @@ class Controller:
                 assert self.pcd_manager.pointcloud is not None
                 self.pcd_manager.pointcloud.save_segmentation_labels()
         elif self.in_projection:
-            pass
+            self.point_controller.save_points_to_file()
 
     def reset(self) -> None:
         """Resets the controllers and bounding boxes from the current screen."""

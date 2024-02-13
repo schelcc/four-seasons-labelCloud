@@ -44,6 +44,8 @@ class SingleImageManager:
         self.base_image : Optional[QPixmap] = None
         self.cursor_pos : Optional[Point2D] = None
 
+        self.SCALE = config.getfloat("USER_INTERFACE", "image_scale")
+
         # Draw action flags
         self.do_draw_cursor : bool = False
         self.do_draw_calib_points : bool = self.view.in_projection
@@ -66,7 +68,7 @@ class SingleImageManager:
         pixmap = QPixmap.fromImage(img)
         pixmap = pixmap.scaledToWidth(1024)
     
-        pixmap = pixmap.transformed(QtGui.QTransform().scale(1, 1))
+        pixmap = pixmap.transformed(QtGui.QTransform().scale(self.SCALE, self.SCALE))
 
         self.base_image = pixmap.copy()
 
