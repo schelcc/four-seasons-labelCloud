@@ -100,6 +100,7 @@ class Controller:
     def next_pcd(self, save: bool = True) -> None:
         if save:
             self.save()
+
         if self.pcd_manager.pcds_left():
             if self.in_labeling:
                 previous_bboxes = self.bbox_controller.bboxes
@@ -112,11 +113,14 @@ class Controller:
                 ):
                     self.bbox_controller.set_bboxes(previous_bboxes)
                 self.bbox_controller.set_active_bbox(0)
+
             elif self.in_projection:
                 previous_points = self.point_controller.points
                 self.pcd_manager.get_next_pcd()
                 self.reset()
+                self.view.init_2d_image()
                 self.point_controller.set_points([]) # TODO
+
         else:
             self.view.update_progress(len(self.pcd_manager.pcds))
             self.view.button_next_pcd.setEnabled(False)
@@ -130,6 +134,7 @@ class Controller:
                 self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())
                 self.bbox_controller.set_active_bbox(0)
             elif self.in_projection:
+                self.view.init_2d_image()
                 self.point_controller.set_points([]) # TODO
                 self.point_controller.set_active_point(0)
 
@@ -141,6 +146,7 @@ class Controller:
             self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())
         elif self.in_projection:
             self.point_controller.set_points([]) # TODO
+            self.view.init_2d_image()
 
     # CONTROL METHODS
     def save(self) -> None: # TODO Add save behavior for projection mode
@@ -382,47 +388,47 @@ class Controller:
 
 
         # BBOX MANIPULATION
-        elif a0.key() == Keys.Key_Z:
+        elif a0.key() == Keys.Key_Z and self.in_labeling:
             # z rotate counterclockwise
             self.bbox_controller.rotate_around_z()
-        elif a0.key() == Keys.Key_X:
+        elif a0.key() == Keys.Key_X and self.in_labeling:
             # z rotate clockwise
             self.bbox_controller.rotate_around_z(clockwise=True)
-        elif a0.key() == Keys.Key_C:
+        elif a0.key() == Keys.Key_C and self.in_labeling:
             # y rotate counterclockwise
             self.bbox_controller.rotate_around_y()
-        elif a0.key() == Keys.Key_V:
+        elif a0.key() == Keys.Key_V and self.in_labeling:
             # y rotate clockwise
             self.bbox_controller.rotate_around_y(clockwise=True)
-        elif a0.key() == Keys.Key_B:
+        elif a0.key() == Keys.Key_B and self.in_labeling:
             # x rotate counterclockwise
             self.bbox_controller.rotate_around_x()
-        elif a0.key() == Keys.Key_N:
+        elif a0.key() == Keys.Key_N and self.in_labeling:
             # x rotate clockwise
             self.bbox_controller.rotate_around_x(clockwise=True)
         #### DUAL EVENTS BASED ON PICKING
         ### IS NOT DRAWING
-        elif a0.key() == Keys.Key_W and not self.drawing_mode.is_active():
+        elif a0.key() == Keys.Key_W and not self.drawing_mode.is_active() and self.in_labeling:
             # move backward
             self.bbox_controller.translate_along_y(boost=self.shift_pressed)
 
-        elif a0.key() == Keys.Key_S and not self.drawing_mode.is_active():
+        elif a0.key() == Keys.Key_S and not self.drawing_mode.is_active() and self.in_labeling:
             # move forward
             self.bbox_controller.translate_along_y(forward=True, boost=self.shift_pressed)
 
-        elif a0.key() == Keys.Key_A and not self.drawing_mode.is_active():
+        elif a0.key() == Keys.Key_A and not self.drawing_mode.is_active() and self.in_labeling:
             # move left
             self.bbox_controller.translate_along_x(left=True, boost=self.shift_pressed)
 
-        elif a0.key() == Keys.Key_D and not self.drawing_mode.is_active():
+        elif a0.key() == Keys.Key_D and not self.drawing_mode.is_active() and self.in_labeling:
             # move right
             self.bbox_controller.translate_along_x(boost=self.shift_pressed)
 
-        elif a0.key() == Keys.Key_Q and not self.drawing_mode.is_active():
+        elif a0.key() == Keys.Key_Q and not self.drawing_mode.is_active() and self.in_labeling:
             # move up
             self.bbox_controller.translate_along_z(boost=self.shift_pressed)
 
-        elif a0.key() == Keys.Key_E and not self.drawing_mode.is_active():
+        elif a0.key() == Keys.Key_E and not self.drawing_mode.is_active() and self.in_labeling:
             # move down
             self.bbox_controller.translate_along_z(down=True, boost=self.shift_pressed)
 
@@ -465,7 +471,7 @@ class Controller:
         elif a0.key() == Keys.Key_Alt:
             # Unset focus
             self.pcd_manager.stop_focus()
-        elif a0.key() in [Keys.Key_L, Keys.Key_Super_L, Keys.Key_Super_R]:
+        elif a0.key() in [Keys.Key_L, Keys.Key_Super_L, Keys.Key_Super_R] and self.in_labeling:
             # lock on to current bbox
             if self.bbox_controller.has_active_bbox():
                 self.pcd_manager.move_focus(self.bbox_controller.get_active_bbox().center, force=True)
@@ -476,10 +482,10 @@ class Controller:
         elif a0.key() in [Keys.Key_F, Keys.Key_Right]:
             # load next sample
             self.next_pcd()
-        elif a0.key() in [Keys.Key_T, Keys.Key_Up]:
+        elif a0.key() in [Keys.Key_T, Keys.Key_Up] and self.in_labeling:
             # select previous bbox
             self.select_relative_bbox(-1)
-        elif a0.key() in [Keys.Key_G, Keys.Key_Down]:
+        elif a0.key() in [Keys.Key_G, Keys.Key_Down] and self.in_labeling:
             # select previous bbox
             self.select_relative_bbox(1)
         elif a0.key() in [Keys.Key_Y, Keys.Key_Comma]:
@@ -488,7 +494,7 @@ class Controller:
         elif a0.key() in [Keys.Key_H, Keys.Key_Period]:
             # change bbox class to next available class
             self.select_relative_class(1)
-        elif a0.key() in list(range(49, 58)):
+        elif a0.key() in list(range(49, 58)) and self.in_labeling:
             # select bboxes with 1-9 digit keys
             self.bbox_controller.set_active_bbox(int(a0.key()) - 49)
 

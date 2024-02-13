@@ -59,7 +59,7 @@ class ProjectionCorrectionController(object):
         #if isinstance(point_pair, PointPairCamera):
         self.points.append(point_pair)
         #self.set_active_point(self.points.index(point_pair))
-        self.set_active_point(-1)
+        self.set_active_point(len(self.points)-1)
         
     def update_point(self, point_id: int, point_pair: PointPairCamera) -> None:
         if isinstance(point_pair, PointPairCamera) and (0 <= point_id < len(self.points)):
@@ -76,11 +76,13 @@ class ProjectionCorrectionController(object):
         self.delete_point(selected_item_id)
         
     def set_active_point(self, point_id: int) -> None:
+        print(f"setting active to {point_id}")
         if 0 <= point_id < len(self.points):
             self.active_point_id = point_id
             self.update_all()
         else:
             self.deselect_point()
+        print(f"active is now {self.active_point_id}")
             
     def set_points(self, points: List[PointPairCamera]):
         self.points = points
@@ -117,6 +119,9 @@ class ProjectionCorrectionController(object):
     def update_all(self) -> None:
         """Update all various variable displays"""
         self.update_point_list()
+        self.update_p3d_readout()
+        self.update_p2d_readout()
+        self.update_camera_readout()
         
     def update_point_list(self) -> None:
         self.view.point_list.blockSignals(True)
@@ -129,3 +134,25 @@ class ProjectionCorrectionController(object):
             if current_item:
                 current_item.setSelected(True)
         self.view.point_list.blockSignals(False) 
+
+    def update_p3d_readout(self) -> None:
+        if self.has_active_point():
+            for idx, lbl in enumerate([self.view.point3d_label_x, self.view.point3d_label_y, self.view.point3d_label_z]):
+                lbl.setText(str(self.get_active_point()[0][idx]))
+    
+    def update_p2d_readout(self) -> None:
+        if self.has_active_point():
+            for idx, lbl in enumerate([self.view.point2d_label_x, self.view.point2d_label_y]):
+                lbl.setText(str(self.get_active_point()[1][idx]))
+
+    def update_camera_readout(self) -> None:
+        cams = ["Left", "Middle", "Right"]
+        if self.has_active_point():
+            self.view.camera_label.setText(cams[self.get_active_point()[2]])
+                
+
+    def get_points_from_file(self) -> None:
+        pass
+
+    def save_points_to_file(self) -> None:
+        pass

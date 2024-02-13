@@ -66,7 +66,8 @@ class SingleImageManager:
         pixmap = QPixmap.fromImage(img)
         pixmap = pixmap.scaledToWidth(1024)
     
-        pixmap = pixmap.transformed(QtGui.QTransform().scale(0.50, 0.50))
+        pixmap = pixmap.transformed(QtGui.QTransform().scale(1, 1))
+
         self.base_image = pixmap.copy()
 
     def render(self) -> None:

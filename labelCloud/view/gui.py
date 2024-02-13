@@ -240,6 +240,11 @@ class GUI(QtWidgets.QMainWindow):
         #elif self.in_projection:
         self.button_point_match: QtWidgets.QPushButton
 
+        self.cursor_pos_label: QtWidgets.QLabel
+        self.cursor_pos_x_label: QtWidgets.QLabel
+        self.cursor_pos_y_label: QtWidgets.QLabel
+        self.cursor_pos_loc_label: QtWidgets.QLabel
+
         self.camera_left: QtWidgets.QLabel
         self.camera_right: QtWidgets.QLabel
         self.camera_middle: QtWidgets.QLabel
@@ -439,6 +444,7 @@ class GUI(QtWidgets.QMainWindow):
                     PointMatchCorrection(self)
                 )
             )
+            self.point_list.currentRowChanged.connect(self.controller.point_controller.set_active_point)
             
            
     def set_checkbox_states(self) -> None:
@@ -493,6 +499,18 @@ class GUI(QtWidgets.QMainWindow):
             else:
                 for cam, manager in enumerate(self.image_manager_list):
                     manager.cursor_pos = None 
+
+            if self.in_projection:
+                locs = ["Left", "Middle", "Right", "Cloud", "Other"]
+                if event_object in self.image_label_list:
+                    idx = self.image_label_list.index(event_object)
+                elif event_object == self.gl_widget:
+                    idx = 3
+                else:
+                    idx = 4
+                self.cursor_pos_loc_label.setText(locs[idx])
+                self.cursor_pos_x_label.setText(str(event.x()))
+                self.cursor_pos_y_label.setText(str(event.y()))
                  
         elif (event.type() == QEvent.Wheel) and (event_object == self.gl_widget): # MOUSE SCROLL
             self.controller.mouse_scroll_event(event)
