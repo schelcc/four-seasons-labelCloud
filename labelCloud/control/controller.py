@@ -263,7 +263,7 @@ class Controller:
         self.curr_cursor_pos = a0.pos()  # Updates the current mouse cursor position
 
         if self.in_projection:
-            self.view.button_complete_selection.setVisible(False)
+            pass
         # Methods that use absolute cursor position
         if self.drawing_mode.is_active() and (not self.ctrl_pressed):
             if self.in_labeling:
