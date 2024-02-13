@@ -37,7 +37,6 @@ class Controller:
 
         usage_mode = config.get("FILE", "usage_mode")
 
-
         self.in_labeling = (usage_mode == "label")
         self.in_projection = (usage_mode == "projection")    
         
@@ -81,6 +80,9 @@ class Controller:
         
         if self.in_labeling:
             self.view.gl_widget.set_bbox_controller(self.bbox_controller)
+
+        elif self.in_projection:
+            self.view.gl_widget.set_projection_controller(self.point_controller)
 
         # Read labels from folders
         self.pcd_manager.read_pointcloud_folder()
@@ -251,7 +253,6 @@ class Controller:
             self.mouse_clicked_labeling(a0)
         elif self.in_projection:
             self.mouse_clicked_projection(a0)
-        
 
     @in_labeling_only_decorator
     def mouse_double_clicked(self, a0: QtGui.QMouseEvent) -> None:
