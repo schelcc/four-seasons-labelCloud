@@ -126,7 +126,6 @@ class GUI(QtWidgets.QMainWindow):
 
         usage_mode = config.get("FILE", "usage_mode")
 
-
         self.in_labeling = (usage_mode == "label")
         self.in_projection = (usage_mode == "projection")        
         
@@ -199,7 +198,6 @@ class GUI(QtWidgets.QMainWindow):
         self.button_span_bbox: QtWidgets.QPushButton
         self.button_save_label: QtWidgets.QPushButton
 
-        self.button_complete_selection: QtWidgets.QPushButton
 
         self.label_list: QtWidgets.QListWidget
         self.current_class_dropdown: QtWidgets.QComboBox
@@ -262,8 +260,6 @@ class GUI(QtWidgets.QMainWindow):
             self.manager_camera_right,
         ]
         
-        self.current_pixmaps = []
-
         self.camera_label: QtWidgets.QLabel
         self.camera_title_label: QtWidgets.QLabel
 
@@ -302,7 +298,6 @@ class GUI(QtWidgets.QMainWindow):
             self.act_color_with_label.setVisible(False)
 
         if self.in_projection:
-            self.button_complete_selection.setDisabled(True)
             # Init camera objects
             for idx, item in enumerate(self.image_manager_list):
                 item.set_camera(idx)
@@ -444,11 +439,6 @@ class GUI(QtWidgets.QMainWindow):
                     PointMatchCorrection(self)
                 )
             )
-
-            self.button_complete_selection.clicked.connect(
-                lambda: self.controller.drawing_mode.finish()
-            )
-            
             
            
     def set_checkbox_states(self) -> None:
