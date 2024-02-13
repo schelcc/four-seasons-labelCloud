@@ -37,7 +37,6 @@ class Controller:
 
         usage_mode = config.get("FILE", "usage_mode")
 
-        usage_mode = usage_mode.replace("\"", "")
 
         self.in_labeling = (usage_mode == "label")
         self.in_projection = (usage_mode == "projection")    
