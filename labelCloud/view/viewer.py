@@ -112,6 +112,7 @@ class GLWidget(QtOpenGL.QGLWidget):
         self.modelview = GL.glGetDoublev(GL.GL_MODELVIEW_MATRIX)
         self.projection = GL.glGetDoublev(GL.GL_PROJECTION_MATRIX)
 
+
         with ignore_depth_mask():  # Do not write decoration and preview elements in depth buffer
             if config.getboolean("USER_INTERFACE", "show_floor"):
                 oglhelper.draw_xy_plane(self.pcd_manager.pointcloud)  # type: ignore
@@ -149,7 +150,8 @@ class GLWidget(QtOpenGL.QGLWidget):
             for bbox in self.bbox_controller.bboxes:  # type: ignore
                 bbox.draw_bbox()
         elif self.in_projection:
-            # TODO
+            if self.projection_controller is not None:
+                self.projection_controller.show_3d_points()
             pass
 
         GL.glPopMatrix()  # restore the previous modelview matrix
