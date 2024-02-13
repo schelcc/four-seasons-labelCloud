@@ -10,11 +10,12 @@ import yaml
 import os
 import numpy as np
 
-from ..definitions import Mode, Camera
+from ..definitions import Mode, Camera, Color4f
 from ..definitions.types import PointPairCamera, Point2D, Point3D
 from ..utils import oglhelper
 from .config_manager import config
 from .pcd_manager import PointCloudManager
+from ..utils.oglhelper import draw_crosshair
 
 if TYPE_CHECKING:
     from ..view.gui import GUI
@@ -104,7 +105,13 @@ class ProjectionCorrectionController(object):
     def update_2d_point(self, point : Point2D, camera : Camera) -> None:
         p3d_pre, _, _ = self.get_active_point()
         self.points[self.active_point_id] = (p3d_pre, point, camera)
-        
+
+    def show_3d_points(self) -> None:
+        for idx, point in enumerate(self.points):
+            color = (0, 1, 0, 1) if idx == self.active_point_id else (0, 0, 1, 1)
+            x, y, z = point[0]
+            draw_crosshair(x, y, z, color, scale=5, thickness=2.5)
+            
     # HELPER
     
     def update_all(self) -> None:
