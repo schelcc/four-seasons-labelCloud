@@ -82,8 +82,9 @@ def draw_cuboid(
 
 
 def draw_crosshair(
-    cx: float, cy: float, cz: float, color: Color4f = (0, 1, 0, 1), scale: float = 1.
+    cx: float, cy: float, cz: float, color: Color4f = (0, 1, 0, 1), scale: float = 1., thickness: float = 1.
 ) -> None:
+    GL.glLineWidth(thickness)
     GL.glBegin(GL.GL_LINES)
     GL.glColor4d(*color)
     GL.glVertex3d(cx + 0.1*scale, cy, cz)  # x-line
@@ -93,6 +94,7 @@ def draw_crosshair(
     GL.glVertex3d(cx, cy, cz + 0.1*scale)  # z-line
     GL.glVertex3d(cx, cy, cz - 0.1*scale)
     GL.glEnd()
+    GL.glLineWidth(1.0)
 
 
 def draw_xy_plane(pcd: "PointCloud") -> None:
