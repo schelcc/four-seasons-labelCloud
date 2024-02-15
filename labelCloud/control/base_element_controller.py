@@ -56,11 +56,11 @@ class BaseElementController(object):
 
     def refresh_element_list(self) -> None:
         """Refresh elements w/ PCD update"""
-        pass
-
-    def save(self) -> None:
-        """Save element list"""
-        pass
+        assert self.pcd_manager is not None, "PCD Controller was never set"
+        
+        pts = self.pcd_manager.get_labels_from_file()
+        self.set_elements(pts)
+        self.update_all()
 
     def select_relative_element(self, amount : int) -> None:
         """Change element some amount relative to current. Will not proceed if
@@ -81,10 +81,11 @@ class BaseElementController(object):
         Ensures consistency with intial element type"""
         if isinstance(element, self.element_type) and (0 <= element_id < len(self.elements)):
             self.elements[element_id] = element
-            self.update_element_list()
+            self.update_all()
     
     def delete_element(self, element_id : int) -> None:
         """Delete element at index element_id"""
+        logging.debug(f"element controller - delete element at index {element_id}")
         if 0 <= element_id <= self.active_element_id:
             del self.elements[element_id]
             if self.active_element_id == element_id:
@@ -128,6 +129,7 @@ class BaseElementController(object):
             
             # Run add element callbacks
             for func in self.add_element_callbacks:
+                logging.debug(f"\t- call add_element callback \"{func}\"")
                 func()
             
             
@@ -136,6 +138,9 @@ class BaseElementController(object):
         initial type"""
         if all([isinstance(x, self.element_type) for x in elements]):
             self.elements = elements
+
+        if len(self.elements) > 0:
+            self.set_active_element(len(self.elements)-1)
     
     def reset(self) -> None:
         """Deselect active element and clear current element list"""

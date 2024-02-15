@@ -31,6 +31,8 @@ from ..utils.decorators import in_labeling_only_decorator, in_projection_only_de
 
 class Controller:
     MOVEMENT_THRESHOLD = 0.05
+    LABELING = LabelConfig().type == LabelingMode.OBJECT_DETECTION
+    PROJECTION = LabelConfig().type == LabelingMode.PROJECTION_CORRECTION
 
     def __init__(self) -> None:
         """Initializes all controllers and managers."""
@@ -38,17 +40,14 @@ class Controller:
         self.pcd_manager = PointCloudManager()
 
         usage_mode = config.get("FILE", "usage_mode")
-
-        self.in_labeling = (usage_mode == "label")
-        self.in_projection = (usage_mode == "projection")    
-       
+      
         self.element_controller : Optional[BaseElementController] = None 
         self.drawing_mode : Optional[BaseDrawingManager] = None
 
-        if self.in_labeling:
+        if self.LABELING:
             self.element_controller = BoundingBoxController()
             self.drawing_mode = LabelDrawingManager(self.element_controller)
-        elif self.in_projection:
+        elif self.PROJECTION:
             self.element_controller = ProjectionCorrectionController()
             self.drawing_mode = ProjectionDrawingManager(self.element_controller, self.pcd_manager)
 
@@ -129,7 +128,7 @@ class Controller:
     # CONTROL METHODS
     def save(self) -> None: # TODO Handle for semantic mode
         """Saves all bounding boxes and optionally segmentation labels in the label file."""
-        self.element_controller.save()
+        self.pcd_manager.save_labels_into_file(self.element_controller.elements)
 
     def reset(self) -> None:
         """Resets the controllers and bounding boxes from the current screen."""
@@ -223,9 +222,9 @@ class Controller:
         manager.register_click()
 
     def mouse_clicked(self, a0 : QtGui.QMouseEvent) -> None:
-        if self.in_labeling:
+        if self.LABELING:
             self.mouse_clicked_labeling(a0)
-        elif self.in_projection:
+        elif self.PROJECTION:
             self.mouse_clicked_projection(a0)
 
     @in_labeling_only_decorator
@@ -237,15 +236,15 @@ class Controller:
         """Triggers actions when the user moves the mouse"""
         self.curr_cursor_pos = a0.pos()  # Updates the current mouse cursor position
 
-        if self.in_projection:
+        if self.PROJECTION:
             pass
         # Methods that use absolute cursor position
         if self.drawing_mode.is_active() and (not self.ctrl_pressed):
-            if self.in_labeling:
+            if self.LABELING:
                 self.drawing_mode.register_point(
                     a0.x(), a0.y(), correction=True, is_temporary=True
                 )
-            elif self.in_projection:
+            elif self.PROJECTION:
                 self.drawing_mode.register_point_3d(
                 a0.x(), a0.y(), correction=True, is_temporary=True
             )
@@ -265,7 +264,7 @@ class Controller:
                 self.ctrl_pressed
                 and (not self.drawing_mode.is_active())
                 and (not self.align_mode.is_active)
-                and (self.in_labeling)
+                and (self.LABELING)
             ):
                 if a0.buttons() & Keys.LeftButton:  # bbox rotation
                     self.bbox_controller.rotate_with_mouse(-dx, -dy)
@@ -309,10 +308,10 @@ class Controller:
             and (self.shift_pressed)
             and self.drawing_mode.drawing_strategy is not None
             and (not self.drawing_mode.drawing_strategy.IGNORE_SCROLL)
-            and (self.in_labeling)
+            and (self.LABELING)
         ):
             self.drawing_mode.drawing_strategy.register_scale(a0.angleDelta().y())
-        elif self.side_mode and self.element_controller.has_active_element() and self.in_labeling:
+        elif self.side_mode and self.element_controller.has_active_element() and self.LABELING:
             self.element_controller.get_active_element().change_side(  # type: ignore
                 self.selected_side, -a0.angleDelta().y() / 4000  # type: ignore
             )  # ToDo implement method
@@ -357,47 +356,47 @@ class Controller:
 
 
         # BBOX MANIPULATION
-        elif a0.key() == Keys.Key_Z and self.in_labeling:
+        elif a0.key() == Keys.Key_Z and self.LABELING:
             # z rotate counterclockwise
             self.element_controller.rotate_around_z()
-        elif a0.key() == Keys.Key_X and self.in_labeling:
+        elif a0.key() == Keys.Key_X and self.LABELING:
             # z rotate clockwise
             self.element_controller.rotate_around_z(clockwise=True)
-        elif a0.key() == Keys.Key_C and self.in_labeling:
+        elif a0.key() == Keys.Key_C and self.LABELING:
             # y rotate counterclockwise
             self.element_controller.rotate_around_y()
-        elif a0.key() == Keys.Key_V and self.in_labeling:
+        elif a0.key() == Keys.Key_V and self.LABELING:
             # y rotate clockwise
             self.element_controller.rotate_around_y(clockwise=True)
-        elif a0.key() == Keys.Key_B and self.in_labeling:
+        elif a0.key() == Keys.Key_B and self.LABELING:
             # x rotate counterclockwise
             self.element_controller.rotate_around_x()
-        elif a0.key() == Keys.Key_N and self.in_labeling:
+        elif a0.key() == Keys.Key_N and self.LABELING:
             # x rotate clockwise
             self.element_controller.rotate_around_x(clockwise=True)
         #### DUAL EVENTS BASED ON PICKING
         ### IS NOT DRAWING
-        elif a0.key() == Keys.Key_W and not self.drawing_mode.is_active() and self.in_labeling:
+        elif a0.key() == Keys.Key_W and not self.drawing_mode.is_active() and self.LABELING:
             # move backward
             self.element_controller.translate_along_y(boost=self.shift_pressed)
 
-        elif a0.key() == Keys.Key_S and not self.drawing_mode.is_active() and self.in_labeling:
+        elif a0.key() == Keys.Key_S and not self.drawing_mode.is_active() and self.LABELING:
             # move forward
             self.element_controller.translate_along_y(forward=True, boost=self.shift_pressed)
 
-        elif a0.key() == Keys.Key_A and not self.drawing_mode.is_active() and self.in_labeling:
+        elif a0.key() == Keys.Key_A and not self.drawing_mode.is_active() and self.LABELING:
             # move left
             self.element_controller.translate_along_x(left=True, boost=self.shift_pressed)
 
-        elif a0.key() == Keys.Key_D and not self.drawing_mode.is_active() and self.in_labeling:
+        elif a0.key() == Keys.Key_D and not self.drawing_mode.is_active() and self.LABELING:
             # move right
             self.element_controller.translate_along_x(boost=self.shift_pressed)
 
-        elif a0.key() == Keys.Key_Q and not self.drawing_mode.is_active() and self.in_labeling:
+        elif a0.key() == Keys.Key_Q and not self.drawing_mode.is_active() and self.LABELING:
             # move up
             self.element_controller.translate_along_z(boost=self.shift_pressed)
 
-        elif a0.key() == Keys.Key_E and not self.drawing_mode.is_active() and self.in_labeling:
+        elif a0.key() == Keys.Key_E and not self.drawing_mode.is_active() and self.LABELING:
             # move down
             self.element_controller.translate_along_z(down=True, boost=self.shift_pressed)
 
@@ -440,7 +439,7 @@ class Controller:
         elif a0.key() == Keys.Key_Alt:
             # Unset focus
             self.pcd_manager.stop_focus()
-        elif a0.key() in [Keys.Key_L, Keys.Key_Super_L, Keys.Key_Super_R] and self.in_labeling:
+        elif a0.key() in [Keys.Key_L, Keys.Key_Super_L, Keys.Key_Super_R] and self.LABELING:
             # lock on to current bbox
             if self.element_controller.has_active_element():
                 self.pcd_manager.move_focus(self.element_controller.get_active_element().center, force=True)
@@ -451,10 +450,10 @@ class Controller:
         elif a0.key() in [Keys.Key_F, Keys.Key_Right]:
             # load next sample
             self.next_pcd()
-        elif a0.key() in [Keys.Key_T, Keys.Key_Up] and self.in_labeling:
+        elif a0.key() in [Keys.Key_T, Keys.Key_Up] and self.LABELING:
             # select previous bbox
             self.element_controller.select_relative_element(-1)
-        elif a0.key() in [Keys.Key_G, Keys.Key_Down] and self.in_labeling:
+        elif a0.key() in [Keys.Key_G, Keys.Key_Down] and self.LABELING:
             # select previous bbox
             self.element_controller.select_relative_element(1)
         elif a0.key() in [Keys.Key_Y, Keys.Key_Comma]:
@@ -463,7 +462,7 @@ class Controller:
         elif a0.key() in [Keys.Key_H, Keys.Key_Period]:
             # change bbox class to next available class
             self.select_relative_class(1)
-        elif a0.key() in list(range(49, 58)) and self.in_labeling:
+        elif a0.key() in list(range(49, 58)) and self.LABELING:
             # select bboxes with 1-9 digit keys
             self.bbox_controller.set_active_bbox(int(a0.key()) - 49)
 

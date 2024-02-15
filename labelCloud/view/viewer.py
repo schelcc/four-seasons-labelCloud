@@ -18,6 +18,8 @@ from ..definitions.types import Color4f, Point2D
 from ..utils import oglhelper
 from ..control.base_element_controller import BaseElementController
 from ..control.drawing_manager import BaseDrawingManager
+from ..io.labels.config import LabelConfig
+from ..definitions import LabelingMode
 
 
 @contextmanager
@@ -33,6 +35,9 @@ def ignore_depth_mask():
 class GLWidget(QtOpenGL.QGLWidget):
     NEAR_PLANE = config.getfloat("USER_INTERFACE", "near_plane")
     FAR_PLANE = config.getfloat("USER_INTERFACE", "far_plane")
+    LABELING = LabelConfig().type == LabelingMode.OBJECT_DETECTION 
+    PROJECTION = LabelConfig().type == LabelingMode.PROJECTION_CORRECTION
+    SEMANTIC = LabelConfig().type == LabelingMode.SEMANTIC_SEGMENTATION
 
     def __init__(self, parent=None) -> None:
         QtOpenGL.QGLWidget.__init__(self, parent)
@@ -48,9 +53,6 @@ class GLWidget(QtOpenGL.QGLWidget):
         oglhelper.DEVICE_PIXEL_RATIO = (
             self.DEVICE_PIXEL_RATIO
         )  # set for helper functions
-
-        self.in_labeling = (config.get("FILE", "usage_mode") == "label")
-        self.in_projection = (config.get("FILE", "usage_mode") == "projection")
 
         self.pcd_manager: PointCloudManager = None  # type: ignore
 
@@ -129,7 +131,7 @@ class GLWidget(QtOpenGL.QGLWidget):
                     self.selected_side_vertices, color=(0, 1, 0, 0.3)
                 )
 
-        if self.in_labeling:
+        if self.LABELING:
             # Draw active bbox
             if self.element_controller.has_active_element():
                 bbox_center = self.element_controller.get_active_element().center
@@ -143,8 +145,8 @@ class GLWidget(QtOpenGL.QGLWidget):
             # Draw labeled bboxes
             for bbox in self.element_controller.elements:  # type: ignore
                 bbox.draw_bbox()
-        elif self.in_projection:
-            pass
+        elif self.PROJECTION:
+            self.element_controller.show_3d_points()
 
         GL.glPopMatrix()  # restore the previous modelview matrix
 

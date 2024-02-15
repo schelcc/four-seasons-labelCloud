@@ -6,7 +6,7 @@ from typing import List, Optional, Union
 
 import numpy as np
 
-from ...model import BBox
+from ...model import Element
 from .config import LabelConfig
 
 
@@ -43,8 +43,10 @@ class BaseLabelFormat(ABC):
             decimal_places = self.export_precision
         return np.round(x, decimal_places).tolist()
 
-    def save_label_to_file(self, pcd_path: Path, data: Union[dict, str]) -> Path:
-        label_path = self.label_folder.joinpath(pcd_path.stem + self.FILE_ENDING)
+    def save_label_to_file(self, pcd_path: Path, data: Union[dict, str], suffix: str = "_label3d") -> Path:
+        name = pcd_path.stem.split('_')[0] + suffix
+        label_path = self.label_folder.joinpath(name + self.FILE_ENDING)
+        print(label_path)
 
         if label_path.is_file():
             logging.info("File %s already exists, replacing file ..." % label_path)
@@ -59,11 +61,11 @@ class BaseLabelFormat(ABC):
         return label_path
 
     @abstractmethod
-    def import_labels(self, pcd_path: Path) -> List[BBox]:
+    def import_labels(self, pcd_path: Path) -> List[Element]:
         raise NotImplementedError
 
     @abstractmethod
-    def export_labels(self, bboxes: List[BBox], pcd_path: Path) -> None:
+    def export_labels(self, bboxes: List[Element], pcd_path: Path) -> None:
         raise NotImplementedError
 
 

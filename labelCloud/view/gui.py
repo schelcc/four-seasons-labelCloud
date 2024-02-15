@@ -131,12 +131,6 @@ class GUI(QtWidgets.QMainWindow):
     def __init__(self, control: "Controller") -> None:
         super(GUI, self).__init__()
 
-        usage_mode = config.get("FILE", "usage_mode")
-
-        self.in_labeling = (usage_mode == "label")
-        self.in_projection = (usage_mode == "projection")        
-        
-        logging.info(f"Usage mode is {usage_mode}")
 
         uic.loadUi(
             pkg_resources.resource_filename(
@@ -158,6 +152,20 @@ class GUI(QtWidgets.QMainWindow):
         ) 
         self.all_ui_elements = []
 
+        self.startup_dialog = StartupDialog()
+        if self.startup_dialog.exec():
+            pass
+        else:
+            sys.exit()
+
+        self.LABELING = LabelConfig().type == LabelingMode.OBJECT_DETECTION
+        self.PROJECTION = LabelConfig().type == LabelingMode.PROJECTION_CORRECTION
+        self.SEMANTIC = LabelConfig().type == LabelingMode.SEMANTIC_SEGMENTATION
+        
+        # Segmentation only functionalities
+        if LabelConfig().type == LabelingMode.OBJECT_DETECTION:
+            self.button_assign_label.setVisible(False)
+            self.act_color_with_label.setVisible(False)
         # Files
         self.act_set_pcd_folder: QtWidgets.QAction
         self.act_set_element_folder: QtWidgets.QAction
@@ -290,20 +298,6 @@ class GUI(QtWidgets.QMainWindow):
         self.connect_events()
         self.set_checkbox_states()  # tick in menu
 
-        # Run startup dialog only in labeling mode
-        if self.in_labeling:
-            self.startup_dialog = StartupDialog()
-            if self.startup_dialog.exec():
-                pass
-            else:
-                sys.exit()
-        
-        # Segmentation only functionalities
-        if LabelConfig().type == LabelingMode.OBJECT_DETECTION \
-            and self.in_labeling:
-            self.button_assign_label.setVisible(False)
-            self.act_color_with_label.setVisible(False)
-
         # Connect with controller
         self.controller.startup(self)
 
@@ -398,14 +392,14 @@ class GUI(QtWidgets.QMainWindow):
             logging.debug(f"\t- text_labeling: {str(text_labeling)}")
             logging.debug(f"\t- text_projection: {str(text_projection)}")
 
-            is_visible = (visible_labeling and self.in_labeling) or (visible_projection and self.in_projection)
+            is_visible = (visible_labeling and self.LABELING) or (visible_projection and self.PROJECTION)
             ui_element.setVisible(is_visible)
 
             logging.debug(f"\t- is currently visible: {str(is_visible)}")
 
-            if text_labeling is not None and self.in_labeling:
+            if text_labeling is not None and self.LABELING:
                 ui_element.setText(text_labeling)
-            elif text_projection is not None and self.in_projection:
+            elif text_projection is not None and self.PROJECTION:
                 ui_element.setText(text_projection)
 
             connections = ui_element.property("connections")
@@ -427,7 +421,7 @@ class GUI(QtWidgets.QMainWindow):
         logging.debug(" ")
                       
     def set_checkbox_states(self) -> None:
-        if self.in_labeling:
+        if self.LABELING:
             self.act_propagate_labels.setChecked(
             config.getboolean("LABEL", "propagate_labels")
             )
@@ -448,7 +442,7 @@ class GUI(QtWidgets.QMainWindow):
 
     # Collect, filter and forward events to viewer
     def eventFilter(self, event_object, event) -> bool:
-        if self.in_labeling:
+        if self.LABELING:
             self.bbox_previous = copy.deepcopy(self.controller.element_controller.get_active_element())
 
         # Keyboard Events
@@ -456,9 +450,9 @@ class GUI(QtWidgets.QMainWindow):
             self,
             self.element_list,
         ]:
-            if self.in_labeling:
+            if self.LABELING:
                 self.update_bbox_stats(self.controller.element_controller.get_active_element())
-            if self.in_projection:
+            if self.PROJECTION:
                 pass
             self.controller.key_press_event(event)
             return True  # TODO: Recheck pyqt behaviour
@@ -470,7 +464,7 @@ class GUI(QtWidgets.QMainWindow):
         if (event.type() == QEvent.MouseMove):
             if (event_object == self.gl_widget): # MOUSE MOVE
                 self.controller.mouse_move_event(event)
-                if self.in_labeling:
+                if self.LABELING:
                     self.update_bbox_stats(self.controller.element_controller.get_active_element())
             if (event_object in self.image_label_list):
                 idx = self.image_label_list.index(event_object)
@@ -481,7 +475,7 @@ class GUI(QtWidgets.QMainWindow):
                 for cam, manager in enumerate(self.image_manager_list):
                     manager.cursor_pos = None 
 
-#            if self.in_projection:
+#            if self.PROJECTION:
 #                locs = ["Left", "Middle", "Right", "Cloud", "Other"]
 #                if event_object in self.image_label_list:
 #                    idx = self.image_label_list.index(event_object)
@@ -495,7 +489,7 @@ class GUI(QtWidgets.QMainWindow):
                  
         elif (event.type() == QEvent.Wheel) and (event_object == self.gl_widget): # MOUSE SCROLL
             self.controller.mouse_scroll_event(event)
-            if self.in_labeling:
+            if self.LABELING:
                 self.update_bbox_stats(self.controller.element_controller.get_active_element())
 
         elif event.type() == QEvent.MouseButtonDblClick and ( # MOUSE DOUBLE CLICK
@@ -508,7 +502,7 @@ class GUI(QtWidgets.QMainWindow):
             event_object == self.gl_widget
         ):
             self.controller.mouse_clicked(event)
-            if self.in_labeling:
+            if self.LABELING:
                 self.update_bbox_stats(self.controller.element_controller.get_active_element())
 
         elif (event.type() == QEvent.MouseButtonPress) and ( # MOUSE SINGLE CLICK - ON IMAGE
@@ -517,7 +511,7 @@ class GUI(QtWidgets.QMainWindow):
             self.controller.image_clicked(event, event_object)
 
         elif (event.type() == QEvent.MouseButtonPress) and (
-            self.in_labeling
+            self.LABELING
         ) and ( # ???
             event_object != self.current_class_dropdown
         ):
@@ -648,10 +642,10 @@ class GUI(QtWidgets.QMainWindow):
 
     # Enables, disables the draw mode
     def activate_draw_modes(self, state: bool) -> None:
-        if self.in_labeling:
+        if self.LABELING:
             self.button_pick_bbox.setEnabled(state)
             self.button_span_bbox.setEnabled(state)
-        elif self.in_projection:
+        elif self.PROJECTION:
             self.button_point_match.setEnabled(state)
 
     def line_edited_activated(self) -> bool:

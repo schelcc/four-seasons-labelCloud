@@ -28,16 +28,18 @@ class ProjectionCorrectionController(BaseElementController):
     
     def __init__(self) -> None:
         super().__init__(PointPairCamera)
-
+        self.register_add_element_callback(self.detransform_active_pt)
             
     def show_3d_points(self) -> None:
         for idx, point in enumerate(self.elements):
             color = (0, 1, 0, 1) if idx == self.active_element_id else (0, 0, 1, 1)
             x, y, z = point.p3d
             draw_crosshair(x, y, z, color, scale=5, thickness=2.5)
-            
-    # HELPER
     
+    def detransform_active_pt(self) -> None:
+        cur_pt = self.get_active_element()
+        cur_pt.p2d_true = Point2D(*self.view.image_manager_list[0].detransform(cur_pt.p2d))
+            
     def update_all(self) -> None:
         """Update all various variable displays"""
         self.update_element_list()
@@ -70,9 +72,3 @@ class ProjectionCorrectionController(BaseElementController):
     def update_camera_readout(self) -> None:
         if self.has_active_element():
             self.view.row3_col1_edit.setText(str(self.get_active_element().cam))     
-
-    def get_points_from_file(self) -> None:
-        pass
-
-    def save_points_to_file(self) -> None:
-        pass

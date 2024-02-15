@@ -14,7 +14,7 @@ import pkg_resources
 from ..definitions import LabelingMode, Point3D, Color3f
 from ..io.labels.config import LabelConfig
 from ..io.pointclouds import BasePointCloudHandler, Open3DHandler
-from ..model import BBox, Perspective, PointCloud
+from ..model import BBox, Perspective, PointCloud, Element
 from ..utils.logger import blue, green, print_column
 from .config_manager import config
 from .label_manager import LabelManager
@@ -29,6 +29,8 @@ class PointCloudManager(object):
     TRANSLATION_FACTOR = config.getfloat("POINTCLOUD", "STD_TRANSLATION")
     ZOOM_FACTOR = config.getfloat("POINTCLOUD", "STD_ZOOM")
     SEGMENTATION = LabelConfig().type == LabelingMode.SEMANTIC_SEGMENTATION
+    PROJECTION = LabelConfig().type == LabelingMode.PROJECTION_CORRECTION
+    LABELING = LabelConfig().type == LabelingMode.OBJECT_DETECTION
 
     def __init__(self) -> None:
         # Point cloud management
@@ -153,10 +155,10 @@ class PointCloudManager(object):
         for label_class in LabelConfig().classes:
             self.view.current_class_dropdown.addItem(label_class.name)
 
-    def get_labels_from_file(self) -> List[BBox]:
-        bboxes = self.label_manager.import_labels(self.pcd_path)
-        logging.info(green("Loaded %s bboxes!" % len(bboxes)))
-        return bboxes
+    def get_labels_from_file(self) -> List[Element]:
+        elements = self.label_manager.import_labels(self.pcd_path)
+        logging.info(green("Loaded %s elements!" % len(elements)))
+        return elements
 
     def discretize_pt(self, point : Point3D, replace_color : Optional[Color3f] = None):
         return self.pointcloud.get_nearest_point(point, replace_color=replace_color)
@@ -169,12 +171,13 @@ class PointCloudManager(object):
             set(LabelConfig().get_classes().keys())
         )  # TODO: Move to better location
 
-    def save_labels_into_file(self, bboxes: List[BBox]) -> None:
+    def save_labels_into_file(self, elements: List[Element]) -> None:
         if self.pcds:
-            self.label_manager.export_labels(self.pcd_path, bboxes)
-            self.collected_object_classes.update(
-                {bbox.get_classname() for bbox in bboxes}
-            )
+            self.label_manager.export_labels(self.pcd_path, elements)
+            if self.LABELING:
+                self.collected_object_classes.update(
+                    {bbox.get_classname() for bbox in bboxes}
+                )
         else:
             logging.warning("No point clouds to save labels for!")
 

@@ -19,6 +19,7 @@ class SelectLabelingMode(QWidget):
 
         self._add_object_detection_button(row_buttons)
         self._add_semantic_segmentation_button(row_buttons)
+        self._add_projection_calibration_button(row_buttons)
 
         self._initialize_buttons()
 
@@ -30,6 +31,8 @@ class SelectLabelingMode(QWidget):
             return LabelingMode.OBJECT_DETECTION
         if self.button_semantic_segmentation.isChecked():
             return LabelingMode.SEMANTIC_SEGMENTATION
+        if self.button_projection_calibration.isChecked():
+            return LabelingMode.PROJECTION_CORRECTION
         raise Exception("No labeling mode selected.")
 
     @property
@@ -37,6 +40,16 @@ class SelectLabelingMode(QWidget):
         self,
     ) -> List[BaseLabelFormat]:
         return self.selected_labeling_mode.get_available_formats()
+
+    def _add_projection_calibration_button(self, parent: QHBoxLayout) -> None:
+        self.button_projection_calibration = QPushButton(
+            text=LabelingMode.PROJECTION_CORRECTION.title().replace("_", " ")
+        )
+        self.button_projection_calibration.setCheckable(True)
+        self.button_projection_calibration.setToolTip(
+            "This will set the usage mode to projection correction"
+        )
+        parent.addWidget(self.button_projection_calibration)
 
     def _add_object_detection_button(self, parent: QHBoxLayout) -> None:
         self.button_object_detection = QPushButton(
@@ -63,13 +76,24 @@ class SelectLabelingMode(QWidget):
     def _initialize_buttons(self) -> None:
         if LabelConfig().type == LabelingMode.OBJECT_DETECTION:
             self.button_object_detection.setChecked(True)
-        else:
+        elif LabelConfig().type == LabelingMode.SEMANTIC_SEGMENTATION:
             self.button_semantic_segmentation.setChecked(True)
+        elif LabelConfig().type == LabelingMode.PROJECTION_CORRECTION:
+            self.button_projection_calibration.setChecked(True)
 
     def _connect_clicked_events(self) -> None:
+        def select_projection_correction():
+            self.button_projection_calibration.setChecked(True)
+            self.button_object_detection.setChecked(False)
+            self.button_semantic_segmentation.setChecked(False)
+            self.changed.emit(self.selected_labeling_mode)
+            
+        self.button_projection_calibration.clicked.connect(select_projection_correction)
+        
         def select_object_detection():
             self.button_object_detection.setChecked(True)
             self.button_semantic_segmentation.setChecked(False)
+            self.button_projection_calibration.setChecked(False)
             self.changed.emit(self.selected_labeling_mode)
 
         self.button_object_detection.clicked.connect(select_object_detection)
@@ -77,6 +101,7 @@ class SelectLabelingMode(QWidget):
         def select_semantic_segmentation():
             self.button_semantic_segmentation.setChecked(True)
             self.button_object_detection.setChecked(False)
+            self.button_projection_calibration.setChecked(False)
             self.changed.emit(self.selected_labeling_mode)
 
         self.button_semantic_segmentation.clicked.connect(select_semantic_segmentation)

@@ -33,7 +33,8 @@ if TYPE_CHECKING:
 SUFFIXES = ["_top_left_dd.png", "_top_mid_dd.png", "_top_right_dd.png"]
 
 class SingleImageManager:
-    IMAGE_SCALED_WIDTH: int = 512
+    IMAGE_SCALED_WIDTH: int = 2048//4
+    IMAGE_SCALED_HEIGHT: int = 1536//4
     def __init__(self, label : QtWidgets.QLabel, view : "GUI"):
         self.view : "GUI" = view
         self.drawing_mode : Optional[BaseDrawingManager] = None
@@ -49,11 +50,28 @@ class SingleImageManager:
 
         # Draw action flags
         self.do_draw_cursor : bool = False
-        self.do_draw_calib_points : bool = self.view.in_projection
-        self.do_draw_bboxes : bool = self.view.in_labeling
-    
+        self.do_draw_bboxes : bool = False 
+        self.do_draw_calib_points : bool = False
+        
+    def detransform(self, point : Point2D) -> Point2D:
+        """Perform pixmap transformations in reverse to match pixels properly"""
+        new_x, new_y = point 
+        new_x *= (4*(1/self.SCALE))
+        new_y *= (4*(1/self.SCALE))
+        return Point2D(new_x, new_y)
+
+    def transform_pt(self, point: Point2D) -> Point2D:
+        """Perform pixmap transformations to match true pt to scaled pt"""
+        new_x, new_y = point 
+        new_x *= 1/(4*(1/self.SCALE))
+        new_y *= 1/(4*(1/self.SCALE))
+        return Point2D(new_x, new_y)
+
     def set_view(self, view : "GUI") -> None:
         self.view = view
+        self.do_draw_calib_points = self.view.PROJECTION
+        self.do_draw_bboxes = self.view.LABELING
+
 
     def set_camera(self, camera : Camera) -> None:
         self.camera = camera
@@ -67,7 +85,7 @@ class SingleImageManager:
 
         img = QtGui.QImage(QtGui.QImageReader(str(self.current_path)).read())      
         pixmap = QPixmap.fromImage(img)
-        pixmap = pixmap.scaledToWidth(self.IMAGE_SCALED_WIDTH)
+        pixmap = pixmap.scaled(self.IMAGE_SCALED_WIDTH, self.IMAGE_SCALED_HEIGHT, QtCore.Qt.KeepAspectRatio)
     
         pixmap = pixmap.transformed(QtGui.QTransform().scale(self.SCALE, self.SCALE))
 
@@ -79,10 +97,10 @@ class SingleImageManager:
         
         pixmap = self.base_image.copy() 
         
-        if self.view.in_projection and self.drawing_mode.is_active():
+        if self.view.PROJECTION and self.drawing_mode.is_active():
             self.draw_cursor(pixmap) 
         
-        if self.view.in_projection:
+        if self.view.PROJECTION:
             self.draw_pts(pixmap)
          
         self.label.setPixmap(pixmap)
@@ -103,9 +121,9 @@ class SingleImageManager:
         point: Point2D,
         pixmap : QPixmap,
         color = QtCore.Qt.gray,
-        thickness = 1,
-        scale = 1,
-        line_type = QtCore.Qt.SolidLine ) -> None:
+        thickness = 2,
+        scale = 2,
+        line_type = QtCore.Qt.DashLine ) -> None:
         
         painter = QPainter(pixmap)
         painter.setPen(QPen(color, thickness, line_type))
@@ -114,6 +132,7 @@ class SingleImageManager:
         
         painter.drawLine(x-5*scale, y, x+5*scale, y)
         painter.drawLine(x, y-5*scale, x, y+5*scale) 
+        painter.drawPoint(*point)
         
         painter.end()
 
@@ -130,7 +149,7 @@ class SingleImageManager:
             line_type=QtCore.Qt.DashLine
         )            
             
-    def draw_pts(self, pixmap : QPixmap, thickness : int = 3) -> None:
+    def draw_pts(self, pixmap : QPixmap, thickness : int = 1) -> None:
         all_pts = self.view.controller.element_controller.elements
         
         if len(all_pts) == 0: 

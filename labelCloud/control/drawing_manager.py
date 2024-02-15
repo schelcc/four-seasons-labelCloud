@@ -9,7 +9,7 @@ from .base_drawing_manager import BaseDrawingManager
 from .bbox_controller import BoundingBoxController
 from .manual_calibration_controller import ProjectionCorrectionController
 from .pcd_manager import PointCloudManager
-from ..definitions import Camera
+from ..definitions import Camera, Point2D
 
 if TYPE_CHECKING:
     from ..view.gui import GUI
@@ -68,7 +68,7 @@ class ProjectionDrawingManager(BaseDrawingManager):
         if self.drawing_strategy is None:
             return None
         
-        self.drawing_strategy.register_point_2d((x, y), camera) 
+        self.drawing_strategy.register_point_2d(Point2D(x, y), camera) 
         if (self.drawing_strategy.is_finished()):
             self.finish()
 

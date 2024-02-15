@@ -258,7 +258,7 @@ class BoundingBoxController(BaseElementController):
         self.update_z_dial()
         self.update_curr_class()
         self.update_label_list()
-        self.view.update_bbox_stats(self.get_active_element())
+        #self.view.update_bbox_stats(self.get_active_element())
 
     @has_active_element_decorator
     def update_z_dial(self) -> None:
@@ -280,16 +280,16 @@ class BoundingBoxController(BaseElementController):
         Should be always called if the bounding boxes changed.
         :return: None
         """
-        self.view.label_list.blockSignals(True)  # To brake signal loop
-        self.view.label_list.clear()
+        self.view.element_list.blockSignals(True)  # To brake signal loop
+        self.view.element_list.clear()
         for bbox in self.elements:
-            self.view.label_list.addItem(bbox.get_classname())
+            self.view.element_list.addItem(bbox.get_classname())
         if self.has_active_element():
-            self.view.label_list.setCurrentRow(self.active_element_id)
-            current_item = self.view.label_list.currentItem()
+            self.view.element_list.setCurrentRow(self.active_element_id)
+            current_item = self.view.element_list.currentItem()
             if current_item:
                 current_item.setSelected(True)
-        self.view.label_list.blockSignals(False)
+        self.view.element_list.blockSignals(False)
 
     def assign_point_label_in_active_box(self) -> None:
         box = self.get_active_element()

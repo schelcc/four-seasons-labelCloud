@@ -13,6 +13,7 @@ from ...definitions import (
     LabelingMode,
     ObjectDetectionFormat,
     SemanticSegmentationFormat,
+    ProjectionCorrectionFormat,
 )
 from ...definitions.label_formats.base import BaseLabelFormat
 from ...utils.color import hex_to_rgb, rgb_to_hex
@@ -166,6 +167,7 @@ class LabelConfig(object, metaclass=SingletonABCMeta):
         if label_format not in {
             *ObjectDetectionFormat.list(),
             *SemanticSegmentationFormat.list(),
+            *ProjectionCorrectionFormat.list(),
         }:
             raise UnknownLabelFormat(label_format)
 

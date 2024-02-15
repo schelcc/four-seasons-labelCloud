@@ -1,2 +1,3 @@
 from .object_detection import ObjectDetectionFormat
 from .semantic_segmentation import SemanticSegmentationFormat
+from .projection_correction import ProjectionCorrectionFormat
