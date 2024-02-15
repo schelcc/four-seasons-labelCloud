@@ -120,6 +120,13 @@ STYLESHEET = """
     }}
 """
 
+""" 
+UI Properties:
+visible_label
+visible_projection
+
+"""
+
 class GUI(QtWidgets.QMainWindow):
     def __init__(self, control: "Controller") -> None:
         super(GUI, self).__init__()
@@ -131,13 +138,9 @@ class GUI(QtWidgets.QMainWindow):
         
         logging.info(f"Usage mode is {usage_mode}")
 
-        # TODO Add image cursor to draw crosshairs, 
-        # then we can do automatic point-match completion when sufficient
-        # points are selected (eliminating drawing preview for it)
-         
         uic.loadUi(
             pkg_resources.resource_filename(
-                "labelCloud.resources.interfaces", f"interface-{usage_mode}.ui"
+                "labelCloud.resources.interfaces", f"interface-label.ui"
             ),
             self,
         )
@@ -152,20 +155,23 @@ class GUI(QtWidgets.QMainWindow):
                     .joinpath("icons")
                 )
             )
-        )        
+        ) 
+        self.all_ui_elements = []
 
         # Files
         self.act_set_pcd_folder: QtWidgets.QAction
-        self.act_set_label_folder: QtWidgets.QAction
-        
+        self.act_set_element_folder: QtWidgets.QAction
+    
         # MENU BAR 
-        self.act_z_rotation_only: QtWidgets.QAction
-        self.act_color_with_label: QtWidgets.QAction
+        self.act_z_rotation_only: QtWidgets.QAction # In labeling only
+        self.act_color_with_label: QtWidgets.QAction # In labeling only
         self.act_show_floor: QtWidgets.QAction
         self.act_show_orientation: QtWidgets.QAction
         self.act_save_perspective: QtWidgets.QAction
         self.act_align_pcd: QtWidgets.QAction
         self.act_change_settings: QtWidgets.QAction
+
+        self.current_element_label: QtWidgets.QLabel
 
         self.status_bar: QtWidgets.QStatusBar
         self.status_manager = StatusManager(self.status_bar)
@@ -178,72 +184,77 @@ class GUI(QtWidgets.QMainWindow):
         self.button_set_pcd: QtWidgets.QPushButton
         self.progressbar_pcds: QtWidgets.QProgressBar
 
-        #if self.in_labeling:
-        self.act_delete_all_labels: QtWidgets.QAction
-        self.act_set_default_class: QtWidgets.QMenu
-        self.actiongroup_default_class = QActionGroup(self.act_set_default_class)
-        self.act_propagate_labels: QtWidgets.QAction
-            # bbox control section
-        self.button_bbox_up: QtWidgets.QPushButton
-        self.button_bbox_down: QtWidgets.QPushButton
-        self.button_bbox_left: QtWidgets.QPushButton
-        self.button_bbox_right: QtWidgets.QPushButton
-        self.button_bbox_forward: QtWidgets.QPushButton
-        self.button_bbox_backward: QtWidgets.QPushButton
-        self.dial_bbox_z_rotation: QtWidgets.QDial
-        self.button_bbox_decrease_dimension: QtWidgets.QPushButton
-        self.button_bbox_increase_dimension: QtWidgets.QPushButton
+        self.act_delete_all_elements: QtWidgets.QAction
+        self.act_set_default_class: QtWidgets.QMenu # In labeling only
+        self.actiongroup_default_class = QActionGroup(self.act_set_default_class) # In labeling only
+        self.act_propagate_labels: QtWidgets.QAction # In labeling only
 
-        self.button_pick_bbox: QtWidgets.QPushButton
-        self.button_span_bbox: QtWidgets.QPushButton
-        self.button_save_label: QtWidgets.QPushButton
+        self.bbox_controls : QtWidgets.QGroupBox
+        self.button_bbox_up: QtWidgets.QPushButton # In labeling only
+        self.button_bbox_down: QtWidgets.QPushButton # In labeling only
+        self.button_bbox_left: QtWidgets.QPushButton # In labeling only
+        self.button_bbox_right: QtWidgets.QPushButton # In labeling only
+        self.button_bbox_forward: QtWidgets.QPushButton # In labeling only
+        self.button_bbox_backward: QtWidgets.QPushButton # In labeling only
+        self.dial_bbox_z_rotation: QtWidgets.QDial # In labeling only
+        self.button_bbox_decrease_dimension: QtWidgets.QPushButton # In labeling only
+        self.button_bbox_increase_dimension: QtWidgets.QPushButton # In labeling only
+
+        self.button_pick_bbox: QtWidgets.QPushButton # In labeling only
+        self.button_span_bbox: QtWidgets.QPushButton # In labeling only
+        self.button_save: QtWidgets.QPushButton
 
 
-        self.label_list: QtWidgets.QListWidget
-        self.current_class_dropdown: QtWidgets.QComboBox
-        self.button_deselect_label: QtWidgets.QPushButton
-        self.button_delete_label: QtWidgets.QPushButton
-        self.button_assign_label: QtWidgets.QPushButton
+        self.element_list: QtWidgets.QListWidget
+        self.element_list.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
 
-        self.act_change_class_color = QtWidgets.QAction("Change class color")
-        self.act_delete_class = QtWidgets.QAction("Delete label")
-        self.act_crop_pointcloud_inside = QtWidgets.QAction("Save points inside as")
+        self.current_class_dropdown: QtWidgets.QComboBox # In labeling only
+        self.button_deselect_element: QtWidgets.QPushButton
+        self.button_delete_element: QtWidgets.QPushButton
+        self.button_assign_label: QtWidgets.QPushButton # In labeling only
+
+        self.current_class_title: QtWidgets.QLabel
+
+        self.act_change_class_color = QtWidgets.QAction("Change class color") # In labeling only
+        self.act_delete_class = QtWidgets.QAction("Delete label") # In labeling only
+        self.act_crop_pointcloud_inside = QtWidgets.QAction("Save points inside as") # In labeling only
         
-        # BOUNDING BOX PARAMETER EDITS 
-        # TODO Fix
-#        self.edit_pos_x: QtWidgets.QLineEdit
-#        self.edit_pos_y: QtWidgets.QLineEdit
-#        self.edit_pos_z: QtWidgets.QLineEdit
-#
-#        self.edit_length: QtWidgets.QLineEdit
-#        self.edit_width: QtWidgets.QLineEdit
-#        self.edit_height: QtWidgets.QLineEdit
-#
-#        self.edit_rot_x: QtWidgets.QLineEdit
-#        self.edit_rot_y: QtWidgets.QLineEdit
-#        self.edit_rot_z: QtWidgets.QLineEdit
-#
-#        self.all_line_edits = [
-#            self.edit_pos_x,
-#            self.edit_pos_y,
-#            self.edit_pos_z,
-#            self.edit_length,
-#            self.edit_width,
-#            self.edit_height,
-#            self.edit_rot_x,
-#            self.edit_rot_y,
-#            self.edit_rot_z,
-#        ]
+        self.row1_col1_edit: QtWidgets.QLineEdit
+        self.row1_col2_edit: QtWidgets.QLineEdit
+        self.row1_col3_edit: QtWidgets.QLineEdit
 
-        self.label_volume: QtWidgets.QLabel
+        self.row2_col1_edit: QtWidgets.QLineEdit
+        self.row2_col2_edit: QtWidgets.QLineEdit
+        self.row2_col3_edit: QtWidgets.QLineEdit
 
-        #elif self.in_projection:
-        self.button_point_match: QtWidgets.QPushButton
+        self.row3_col1_edit: QtWidgets.QLineEdit
+        self.row3_col2_edit: QtWidgets.QLineEdit
+        self.row3_col3_edit: QtWidgets.QLineEdit
 
-        self.cursor_pos_label: QtWidgets.QLabel
-        self.cursor_pos_x_label: QtWidgets.QLabel
-        self.cursor_pos_y_label: QtWidgets.QLabel
-        self.cursor_pos_loc_label: QtWidgets.QLabel
+        self.row4_col1_label: QtWidgets.QLabel
+        self.row4_col2_label: QtWidgets.QLabel
+        self.row4_col3_label: QtWidgets.QLabel
+
+        self.row1_name_label: QtWidgets.QLabel
+        self.row2_name_label: QtWidgets.QLabel
+        self.row3_name_label: QtWidgets.QLabel
+        self.row4_name_label: QtWidgets.QLabel
+
+        self.all_line_edits = [
+            self.row1_col1_edit,
+            self.row1_col2_edit,
+            self.row1_col3_edit,
+            self.row2_col1_edit,
+            self.row2_col2_edit,
+            self.row2_col3_edit,
+            self.row3_col1_edit,
+            self.row3_col2_edit,
+            self.row3_col3_edit
+        ]
+
+        self.label_volume: QtWidgets.QLabel # In labeling only
+
+        self.button_point_match: QtWidgets.QPushButton # In projection only
 
         self.camera_left: QtWidgets.QLabel
         self.camera_right: QtWidgets.QLabel
@@ -264,24 +275,13 @@ class GUI(QtWidgets.QMainWindow):
             self.manager_camera_middle,
             self.manager_camera_right,
         ]
+
+        self.populate_ui_list()
         
-        self.camera_label: QtWidgets.QLabel
-        self.camera_title_label: QtWidgets.QLabel
-
-        self.point2d_label_x: QtWidgets.QLabel
-        self.point2d_label_y: QtWidgets.QLabel
-        self.point2d_title_label: QtWidgets.QLabel
-
-        self.point3d_label_x: QtWidgets.QLabel
-        self.point3d_label_y: QtWidgets.QLabel
-        self.point3d_label_z: QtWidgets.QLabel
-        self.point3d_title_label: QtWidgets.QLabel
-
-        self.point_list: QtWidgets.QListWidget
-            #self.point_list.setContextMenuPolicy(QtCore.Qt.ActionsContextMenu)
-
-
         self.cam_list = config.getlist("FILE", "image_list")
+
+        for idx, item in enumerate(self.image_manager_list):
+            item.set_camera(idx)
         
         self.controller = control
         self.controller.pcd_manager.pcd_postfix = config.get("POINTCLOUD", "pointcloud_postfix") # LXH
@@ -290,22 +290,19 @@ class GUI(QtWidgets.QMainWindow):
         self.connect_events()
         self.set_checkbox_states()  # tick in menu
 
-        # Run startup dialog
-        self.startup_dialog = StartupDialog()
-        if self.startup_dialog.exec():
-            pass
-        else:
-            sys.exit()
+        # Run startup dialog only in labeling mode
+        if self.in_labeling:
+            self.startup_dialog = StartupDialog()
+            if self.startup_dialog.exec():
+                pass
+            else:
+                sys.exit()
+        
         # Segmentation only functionalities
         if LabelConfig().type == LabelingMode.OBJECT_DETECTION \
             and self.in_labeling:
             self.button_assign_label.setVisible(False)
             self.act_color_with_label.setVisible(False)
-
-        if self.in_projection:
-            # Init camera objects
-            for idx, item in enumerate(self.image_manager_list):
-                item.set_camera(idx)
 
         # Connect with controller
         self.controller.startup(self)
@@ -316,167 +313,151 @@ class GUI(QtWidgets.QMainWindow):
         self.timer.timeout.connect(self.controller.loop_gui)
         self.timer.start()   
 
-    # Event connectors
+    def populate_ui_list(self) -> None:
+        self.all_ui_elements = [
+            self.current_element_label,
+            self.act_set_pcd_folder,
+            self.current_class_title,
+            self.act_set_element_folder,
+            self.act_z_rotation_only,
+            self.act_color_with_label,
+            self.act_show_floor,
+            self.act_show_orientation,
+            self.act_save_perspective,
+            self.act_align_pcd,
+            self.act_change_settings,
+            self.status_bar,
+            self.gl_widget,
+            self.label_current_pcd,
+            self.button_prev_pcd,
+            self.button_next_pcd,
+            self.button_set_pcd,
+            self.progressbar_pcds,
+            self.act_delete_all_elements,
+            self.act_set_default_class,
+            self.actiongroup_default_class,
+            self.act_propagate_labels,
+            self.bbox_controls,
+            self.button_bbox_up,
+            self.button_bbox_down,
+            self.button_bbox_left,
+            self.button_bbox_right,
+            self.button_bbox_forward,
+            self.button_bbox_backward,
+            self.dial_bbox_z_rotation,
+            self.button_bbox_decrease_dimension,
+            self.button_bbox_increase_dimension,
+            self.button_pick_bbox,
+            self.button_span_bbox,
+            self.button_save,
+            self.element_list,
+            self.current_class_dropdown,
+            self.button_deselect_element,
+            self.button_delete_element,
+            self.button_assign_label,
+            self.act_change_class_color,
+            self.act_delete_class,
+            self.act_crop_pointcloud_inside,
+            self.row1_col1_edit,
+            self.row1_col2_edit,
+            self.row1_col3_edit,
+            self.row2_col1_edit,
+            self.row2_col2_edit,
+            self.row2_col3_edit,
+            self.row3_col1_edit,
+            self.row3_col2_edit,
+            self.row3_col3_edit,
+            self.row1_name_label,
+            self.row2_name_label,
+            self.row3_name_label,
+            self.row4_name_label,
+            self.button_point_match,
+            self.camera_left,
+            self.camera_right,
+            self.camera_middle,
+        ]
+
+    def prop_fallback(self, ui_element, prop, fallback):
+        if ui_element.property(prop) is None:
+            return fallback 
+        else:
+            return ui_element.property(prop)
+    
     def connect_events(self) -> None:
-        # POINTCLOUD CONTROL
-        self.button_next_pcd.clicked.connect(lambda: self.controller.next_pcd(save=True))
-
-        self.button_prev_pcd.clicked.connect(self.controller.prev_pcd)
-
-        self.button_set_pcd.pressed.connect(lambda: self.ask_custom_index())
-
-        self.act_change_class_color.triggered.connect(self.change_label_color)
-
-        # open_2D_img
- 
-        self.act_set_pcd_folder.triggered.connect(self.change_pointcloud_folder)
-        self.act_set_label_folder.triggered.connect(self.change_label_folder)
-        self.actiongroup_default_class.triggered.connect(
-            self.change_default_object_class
-        )
-
-        self.act_propagate_labels.toggled.connect(set_propagate_labels)
-        self.act_z_rotation_only.toggled.connect(set_zrotation_only)
-        self.act_color_with_label.toggled.connect(set_color_with_label)
-        self.act_show_floor.toggled.connect(set_floor_visibility)
-        self.act_show_orientation.toggled.connect(set_orientation_visibility)
-        self.act_save_perspective.toggled.connect(set_keep_perspective)
-        self.act_align_pcd.toggled.connect(self.controller.align_mode.change_activation)
-        self.act_change_settings.triggered.connect(self.show_settings_dialog)
-      
-        self.button_save_label.clicked.connect(self.controller.save)
-
-        if self.in_labeling: 
+        for ui_element in self.all_ui_elements:
             
-            self.button_bbox_up.pressed.connect(lambda: self.controller.bbox_controller.translate_along_z())
+            visible_labeling = self.prop_fallback(ui_element, "visible_labeling", True) 
+            visible_projection = self.prop_fallback(ui_element, "visible_projection", True)
+            text_labeling = ui_element.property("text_labeling")
+            text_projection = ui_element.property("text_projection")
 
-            self.button_bbox_down.pressed.connect(lambda: self.controller.bbox_controller.translate_along_z(down=True))
+            # Debugging            
+            logging.debug(f"[UI INIT] Name: \"{ui_element.objectName()}\"")
+            logging.debug(f"\t- visible_labeling: {str(visible_labeling)}")
+            logging.debug(f"\t- visible_projection: {str(visible_projection)}")
+            logging.debug(f"\t- text_labeling: {str(text_labeling)}")
+            logging.debug(f"\t- text_projection: {str(text_projection)}")
 
-            self.button_bbox_left.pressed.connect(lambda: self.controller.bbox_controller.translate_along_x(left=True))
+            is_visible = (visible_labeling and self.in_labeling) or (visible_projection and self.in_projection)
+            ui_element.setVisible(is_visible)
 
-            self.button_bbox_right.pressed.connect(self.controller.bbox_controller.translate_along_x)
+            logging.debug(f"\t- is currently visible: {str(is_visible)}")
 
-            self.button_bbox_forward.pressed.connect(lambda: self.controller.bbox_controller.translate_along_y(forward=True))
+            if text_labeling is not None and self.in_labeling:
+                ui_element.setText(text_labeling)
+            elif text_projection is not None and self.in_projection:
+                ui_element.setText(text_projection)
 
-            self.button_bbox_backward.pressed.connect(lambda: self.controller.bbox_controller.translate_along_y())
-
-            self.dial_bbox_z_rotation.valueChanged.connect(lambda x: self.controller.bbox_controller.rotate_around_z(x, absolute=True))
-
-            self.button_bbox_decrease_dimension.clicked.connect(lambda: self.controller.bbox_controller.scale(decrease=True))
-
-            self.button_bbox_increase_dimension.clicked.connect(lambda: self.controller.bbox_controller.scale())
-
-
-            # LABELING CONTROL
-            self.current_class_dropdown.currentTextChanged.connect(
-                self.controller.bbox_controller.set_classname
-            )
-
-            self.button_deselect_label.clicked.connect(self.controller.bbox_controller.deselect_bbox)
-
-            self.button_delete_label.clicked.connect(self.controller.bbox_controller.delete_current_bbox)
-
-            self.label_list.currentRowChanged.connect(self.controller.bbox_controller.set_active_bbox)
-
-            self.button_assign_label.clicked.connect(
-                self.controller.bbox_controller.assign_point_label_in_active_box
-            )
-
-            # context menu
-            self.act_delete_class.triggered.connect(self.controller.bbox_controller.delete_current_bbox)
-
-            self.act_crop_pointcloud_inside.triggered.connect(
-                self.controller.crop_pointcloud_inside_active_bbox
-            )
-
-            # LABEL CONTROL
-            self.button_pick_bbox.clicked.connect(
-                lambda: self.controller.drawing_mode.set_drawing_strategy(
-                    PickingStrategy(self)
-                )
-            )
-            self.button_span_bbox.clicked.connect(
-                lambda: self.controller.drawing_mode.set_drawing_strategy(
-                    SpanningStrategy(self)
-                )
-            )
-
-
-            # BOUNDING BOX PARAMETER
-            self.edit_pos_x.editingFinished.connect(
-                lambda: self.update_bbox_parameter("pos_x")
-            )
-            self.edit_pos_y.editingFinished.connect(
-                lambda: self.update_bbox_parameter("pos_y")
-            )
-            self.edit_pos_z.editingFinished.connect(
-                lambda: self.update_bbox_parameter("pos_z")
-            )
-
-            self.edit_length.editingFinished.connect(
-                lambda: self.update_bbox_parameter("length")
-            )
-            self.edit_width.editingFinished.connect(
-                lambda: self.update_bbox_parameter("width")
-            )
-            self.edit_height.editingFinished.connect(
-                lambda: self.update_bbox_parameter("height")
-            )
-
-            self.edit_rot_x.editingFinished.connect(
-                lambda: self.update_bbox_parameter("rot_x")
-            )
-            self.edit_rot_y.editingFinished.connect(
-                lambda: self.update_bbox_parameter("rot_y")
-            )
-            self.edit_rot_z.editingFinished.connect(
-                lambda: self.update_bbox_parameter("rot_z")
-            )
-
-            self.act_delete_all_labels.triggered.connect(
-                self.controller.bbox_controller.reset
-            )
-         
-        if self.in_projection: 
-            # CORRECTION CONTROL
-            self.button_point_match.clicked.connect(
-                lambda: self.controller.drawing_mode.set_drawing_strategy(
-                    PointMatchCorrection(self)
-                )
-            )
-            self.point_list.currentRowChanged.connect(self.controller.point_controller.set_active_point)
+            connections = ui_element.property("connections")
             
-           
+            if connections is None or not is_visible:
+                continue
+            
+            connections = connections.split(';')
+
+            conn_events = ["clicked", "pressed", "triggered", "toggled", "valueChanged", "currentTextChanged", "currentRowChanged"]
+            for conn_event in conn_events:
+                if ui_element.property(f"on_{conn_event}"):
+                    for conn in connections:
+                        logging.debug(f"\t- connecting {conn_event} w/ \"{conn}\"")
+                        _globals = globals().copy()
+                        _globals.update(locals())
+                            
+                        exec(f"ui_element.{conn_event}.connect({conn})", _globals)
+        logging.debug(" ")
+                      
     def set_checkbox_states(self) -> None:
-        self.act_propagate_labels.setChecked(
+        if self.in_labeling:
+            self.act_propagate_labels.setChecked(
             config.getboolean("LABEL", "propagate_labels")
-        )
+            )
+            self.act_z_rotation_only.setChecked(
+                config.getboolean("USER_INTERFACE", "z_rotation_only")
+            )
+            self.act_color_with_label.setChecked(
+                config.getboolean("POINTCLOUD", "color_with_label")
+            )
+
         self.act_show_floor.setChecked(
             config.getboolean("USER_INTERFACE", "show_floor")
         )
         self.act_show_orientation.setChecked(
             config.getboolean("USER_INTERFACE", "show_orientation")
         )
-        self.act_z_rotation_only.setChecked(
-            config.getboolean("USER_INTERFACE", "z_rotation_only")
-        )
-        self.act_color_with_label.setChecked(
-            config.getboolean("POINTCLOUD", "color_with_label")
-        )
+        
 
     # Collect, filter and forward events to viewer
     def eventFilter(self, event_object, event) -> bool:
         if self.in_labeling:
-            self.bbox_previous = copy.deepcopy(self.controller.bbox_controller.get_active_bbox())
+            self.bbox_previous = copy.deepcopy(self.controller.element_controller.get_active_element())
 
         # Keyboard Events
         if (event.type() == QEvent.KeyPress) and event_object in [
             self,
-            self.label_list if self.in_labeling else self,
-            self.point_list if self.in_projection else self,
+            self.element_list,
         ]:
             if self.in_labeling:
-                self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+                self.update_bbox_stats(self.controller.element_controller.get_active_element())
             if self.in_projection:
                 pass
             self.controller.key_press_event(event)
@@ -490,7 +471,7 @@ class GUI(QtWidgets.QMainWindow):
             if (event_object == self.gl_widget): # MOUSE MOVE
                 self.controller.mouse_move_event(event)
                 if self.in_labeling:
-                    self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+                    self.update_bbox_stats(self.controller.element_controller.get_active_element())
             if (event_object in self.image_label_list):
                 idx = self.image_label_list.index(event_object)
                 for cam, manager in enumerate(self.image_manager_list):
@@ -500,22 +481,22 @@ class GUI(QtWidgets.QMainWindow):
                 for cam, manager in enumerate(self.image_manager_list):
                     manager.cursor_pos = None 
 
-            if self.in_projection:
-                locs = ["Left", "Middle", "Right", "Cloud", "Other"]
-                if event_object in self.image_label_list:
-                    idx = self.image_label_list.index(event_object)
-                elif event_object == self.gl_widget:
-                    idx = 3
-                else:
-                    idx = 4
-                self.cursor_pos_loc_label.setText(locs[idx])
-                self.cursor_pos_x_label.setText(str(event.x()))
-                self.cursor_pos_y_label.setText(str(event.y()))
+#            if self.in_projection:
+#                locs = ["Left", "Middle", "Right", "Cloud", "Other"]
+#                if event_object in self.image_label_list:
+#                    idx = self.image_label_list.index(event_object)
+#                elif event_object == self.gl_widget:
+#                    idx = 3
+#                else:
+#                    idx = 4
+#                self.cursor_pos_loc_label.setText(locs[idx])
+#                self.cursor_pos_x_label.setText(str(event.x()))
+#                self.cursor_pos_y_label.setText(str(event.y()))
                  
         elif (event.type() == QEvent.Wheel) and (event_object == self.gl_widget): # MOUSE SCROLL
             self.controller.mouse_scroll_event(event)
             if self.in_labeling:
-                self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+                self.update_bbox_stats(self.controller.element_controller.get_active_element())
 
         elif event.type() == QEvent.MouseButtonDblClick and ( # MOUSE DOUBLE CLICK
             event_object == self.gl_widget
@@ -528,7 +509,7 @@ class GUI(QtWidgets.QMainWindow):
         ):
             self.controller.mouse_clicked(event)
             if self.in_labeling:
-                self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+                self.update_bbox_stats(self.controller.element_controller.get_active_element())
 
         elif (event.type() == QEvent.MouseButtonPress) and ( # MOUSE SINGLE CLICK - ON IMAGE
             event_object in self.image_label_list
@@ -541,7 +522,7 @@ class GUI(QtWidgets.QMainWindow):
             event_object != self.current_class_dropdown
         ):
             self.current_class_dropdown.clearFocus()
-            self.update_bbox_stats(self.controller.bbox_controller.get_active_bbox())
+            self.update_bbox_stats(self.controller.element_controller.get_active_element())
         return False
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
@@ -598,28 +579,28 @@ class GUI(QtWidgets.QMainWindow):
     def update_current_class_dropdown(self) -> None:
         self.controller.pcd_manager.populate_class_dropdown()
 
-    def update_bbox_stats(self, bbox) -> None:
-        viewing_precision = config.getint("USER_INTERFACE", "viewing_precision")
-        if bbox and not self.line_edited_activated():
-            self.edit_pos_x.setText(str(round(bbox.get_center()[0], viewing_precision)))
-            self.edit_pos_y.setText(str(round(bbox.get_center()[1], viewing_precision)))
-            self.edit_pos_z.setText(str(round(bbox.get_center()[2], viewing_precision)))
-
-            self.edit_length.setText(
-                str(round(bbox.get_dimensions()[0], viewing_precision))
-            )
-            self.edit_width.setText(
-                str(round(bbox.get_dimensions()[1], viewing_precision))
-            )
-            self.edit_height.setText(
-                str(round(bbox.get_dimensions()[2], viewing_precision))
-            )
-
-            self.edit_rot_x.setText(str(round(bbox.get_x_rotation(), 1)))
-            self.edit_rot_y.setText(str(round(bbox.get_y_rotation(), 1)))
-            self.edit_rot_z.setText(str(round(bbox.get_z_rotation(), 1)))
-
-            self.label_volume.setText(str(round(bbox.get_volume(), viewing_precision)))
+#    def update_bbox_stats(self, bbox) -> None:
+#        viewing_precision = config.getint("USER_INTERFACE", "viewing_precision")
+#        if bbox and not self.line_edited_activated():
+#            self.edit_pos_x.setText(str(round(bbox.get_center()[0], viewing_precision)))
+#            self.edit_pos_y.setText(str(round(bbox.get_center()[1], viewing_precision)))
+#            self.edit_pos_z.setText(str(round(bbox.get_center()[2], viewing_precision)))
+#
+#            self.edit_length.setText(
+#                str(round(bbox.get_dimensions()[0], viewing_precision))
+#            )
+#            self.edit_width.setText(
+#                str(round(bbox.get_dimensions()[1], viewing_precision))
+#            )
+#            self.edit_height.setText(
+#                str(round(bbox.get_dimensions()[2], viewing_precision))
+#            )
+#
+#            self.edit_rot_x.setText(str(round(bbox.get_x_rotation(), 1)))
+#            self.edit_rot_y.setText(str(round(bbox.get_y_rotation(), 1)))
+#            self.edit_rot_z.setText(str(round(bbox.get_z_rotation(), 1)))
+#
+#            self.label_volume.setText(str(round(bbox.get_volume(), viewing_precision)))
 #        if self.bbox_previous is not None and bbox:
             # change check
 #            if (self.bbox_previous.center != bbox.center 
@@ -629,41 +610,41 @@ class GUI(QtWidgets.QMainWindow):
 #                or self.bbox_previous.z_rotation != bbox.z_rotation):
 
 
-    def update_bbox_parameter(self, parameter: str) -> None:
-        str_value = None
-        self.setFocus()  # Changes the focus from QLineEdit to the window
-
-        if parameter == "pos_x":
-            str_value = self.edit_pos_x.text()
-        if parameter == "pos_y":
-            str_value = self.edit_pos_y.text()
-        if parameter == "pos_z":
-            str_value = self.edit_pos_z.text()
-        if str_value and string_is_float(str_value):
-            self.controller.bbox_controller.update_position(parameter, float(str_value))
-            return
-
-        if parameter == "length":
-            str_value = self.edit_length.text()
-        if parameter == "width":
-            str_value = self.edit_width.text()
-        if parameter == "height":
-            str_value = self.edit_height.text()
-        if str_value and string_is_float(str_value, recect_negative=True):
-            self.controller.bbox_controller.update_dimension(
-                parameter, float(str_value)
-            )
-            return
-
-        if parameter == "rot_x":
-            str_value = self.edit_rot_x.text()
-        if parameter == "rot_y":
-            str_value = self.edit_rot_y.text()
-        if parameter == "rot_z":
-            str_value = self.edit_rot_z.text()
-        if str_value and string_is_float(str_value):
-            self.controller.bbox_controller.update_rotation(parameter, float(str_value))
-            return
+#    def update_bbox_parameter(self, parameter: str) -> None:
+#        str_value = None
+#        self.setFocus()  # Changes the focus from QLineEdit to the window
+#
+#        if parameter == "pos_x":
+#            str_value = self.edit_pos_x.text()
+#        if parameter == "pos_y":
+#            str_value = self.edit_pos_y.text()
+#        if parameter == "pos_z":
+#            str_value = self.edit_pos_z.text()
+#        if str_value and string_is_float(str_value):
+#            self.controller.bbox_controller.update_position(parameter, float(str_value))
+#            return
+#
+#        if parameter == "length":
+#            str_value = self.edit_length.text()
+#        if parameter == "width":
+#            str_value = self.edit_width.text()
+#        if parameter == "height":
+#            str_value = self.edit_height.text()
+#        if str_value and string_is_float(str_value, recect_negative=True):
+#            self.controller.bbox_controller.update_dimension(
+#                parameter, float(str_value)
+#            )
+#            return
+#
+#        if parameter == "rot_x":
+#            str_value = self.edit_rot_x.text()
+#        if parameter == "rot_y":
+#            str_value = self.edit_rot_y.text()
+#        if parameter == "rot_z":
+#            str_value = self.edit_rot_z.text()
+#        if str_value and string_is_float(str_value):
+#            self.controller.bbox_controller.update_rotation(parameter, float(str_value))
+#            return
 
     # Enables, disables the draw mode
     def activate_draw_modes(self, state: bool) -> None:
@@ -695,17 +676,18 @@ class GUI(QtWidgets.QMainWindow):
             self.controller.pcd_manager.get_next_pcd()
             logging.info("Changed point cloud folder to %s!" % path_to_folder)
 
-    def change_label_folder(self) -> None:
+    def change_element_folder(self) -> None:
         path_to_folder = Path(
             QFileDialog.getExistingDirectory(
                 self,
-                "Change Label Folder",
-                directory=config.get("FILE", "label_folder"),
+                "Change Element Folder",
+                directory=config.get("FILE", "element_folder"),
             )
         )
         if not path_to_folder.is_dir():
             logging.warning("Please specify a valid folder path.")
         else:
+            # TODO
             self.controller.pcd_manager.label_manager.label_folder = path_to_folder
             self.controller.pcd_manager.label_manager.label_strategy.update_label_folder(
                 path_to_folder
@@ -752,7 +734,7 @@ class GUI(QtWidgets.QMainWindow):
         self.input_pcd.setLabelText(f"Insert Point Cloud number: {pcd_path.name}")
 
     def change_label_color(self):
-        bbox = self.controller.bbox_controller.get_active_bbox()
+        bbox = self.controller.element_controller.get_active_element()
         LabelConfig().set_class_color(
             bbox.classname, Color3f.from_qcolor(QColorDialog.getColor())
         )

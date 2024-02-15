@@ -8,8 +8,9 @@ from ..labeling_strategies import BaseLabelingStrategy
 from ..proj_correction_strategies import BaseProjCorrection
 
 from .bbox_controller import BoundingBoxController
-from .projection_controller import ProjectionCorrectionController
-    
+from .manual_calibration_controller import ProjectionCorrectionController
+
+ 
 class BaseDrawingManager(object):
     def __init__(self, drawing_strategy_type) -> None:
         self.view: "GUI"

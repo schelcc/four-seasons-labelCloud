@@ -1,12 +1,13 @@
 import logging
 from typing import TYPE_CHECKING, Union, Optional
 
+from logdecorator import log_on_start
 from ..labeling_strategies import BaseLabelingStrategy
 from ..proj_correction_strategies import BaseProjCorrection
 
 from .base_drawing_manager import BaseDrawingManager
 from .bbox_controller import BoundingBoxController
-from .projection_controller import ProjectionCorrectionController
+from .manual_calibration_controller import ProjectionCorrectionController
 from .pcd_manager import PointCloudManager
 from ..definitions import Camera
 
@@ -73,5 +74,5 @@ class ProjectionDrawingManager(BaseDrawingManager):
 
     def finish(self) -> None:
         if self.drawing_strategy is not None:
-            self.point_controller.add_point(self.drawing_strategy.get_complete_point())
+            self.point_controller.add_element(self.drawing_strategy.get_complete_point())
             self.drawing_strategy = None

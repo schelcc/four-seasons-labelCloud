@@ -22,8 +22,10 @@ from .bbox_controller import BoundingBoxController
 from .config_manager import config
 from .drawing_manager import LabelDrawingManager
 from .drawing_manager import ProjectionDrawingManager
+from .base_drawing_manager import BaseDrawingManager         
 from .pcd_manager import PointCloudManager
-from .projection_controller import ProjectionCorrectionController
+from .manual_calibration_controller import ProjectionCorrectionController
+from .base_element_controller import BaseElementController
 from ..utils.decorators import in_labeling_only_decorator, in_projection_only_decorator
 
 
@@ -39,13 +41,16 @@ class Controller:
 
         self.in_labeling = (usage_mode == "label")
         self.in_projection = (usage_mode == "projection")    
-        
+       
+        self.element_controller : Optional[BaseElementController] = None 
+        self.drawing_mode : Optional[BaseDrawingManager] = None
+
         if self.in_labeling:
-            self.bbox_controller = BoundingBoxController()
-            self.drawing_mode = LabelDrawingManager(self.bbox_controller)
+            self.element_controller = BoundingBoxController()
+            self.drawing_mode = LabelDrawingManager(self.element_controller)
         elif self.in_projection:
-            self.point_controller = ProjectionCorrectionController()
-            self.drawing_mode = ProjectionDrawingManager(self.point_controller, self.pcd_manager)
+            self.element_controller = ProjectionCorrectionController()
+            self.drawing_mode = ProjectionDrawingManager(self.element_controller, self.pcd_manager)
 
         # Drawing states
         self.align_mode = AlignMode(self.pcd_manager)
@@ -65,24 +70,19 @@ class Controller:
         """Sets the view in all controllers and dependent modules; Loads labels from file."""
         self.view = view
         
-        if self.in_labeling:
-            self.bbox_controller.set_view(self.view)
-            self.bbox_controller.pcd_manager = self.pcd_manager
-        elif self.in_projection:
-            self.point_controller.set_view(self.view)
-            for manager in self.view.image_manager_list:
-                manager.drawing_mode = self.drawing_mode
-            
+        assert self.element_controller is not None, "Element controller never got set"
+        
+        self.element_controller.set_view(self.view)
+        self.element_controller.set_pcd_manager(self.pcd_manager)
+        
+        for manager in self.view.image_manager_list:
+            manager.drawing_mode = self.drawing_mode
         
         self.pcd_manager.set_view(self.view)
         self.drawing_mode.set_view(self.view)
         self.align_mode.set_view(self.view)
         
-        if self.in_labeling:
-            self.view.gl_widget.set_bbox_controller(self.bbox_controller)
-
-        elif self.in_projection:
-            self.view.gl_widget.set_projection_controller(self.point_controller)
+        self.view.gl_widget.set_element_controller(self.element_controller) 
 
         # Read labels from folders
         self.pcd_manager.read_pointcloud_folder()
@@ -102,23 +102,10 @@ class Controller:
             self.save()
 
         if self.pcd_manager.pcds_left():
-            if self.in_labeling:
-                previous_bboxes = self.bbox_controller.bboxes
-                self.pcd_manager.get_next_pcd()
-                self.reset()
-                self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())   
-
-                if not self.bbox_controller.bboxes and config.getboolean(
-                    "LABEL", "propagate_labels"
-                ):
-                    self.bbox_controller.set_bboxes(previous_bboxes)
-                self.bbox_controller.set_active_bbox(0)
-
-            elif self.in_projection:
-                self.pcd_manager.get_next_pcd()
-                self.reset()
-                self.point_controller.get_points_from_file()
-                self.view.init_2d_image()
+            self.pcd_manager.get_next_pcd()
+            self.reset()
+            self.element_controller.refresh_element_list() # Handle for label propagation
+            self.view.init_2d_image()
 
         else:
             self.view.update_progress(len(self.pcd_manager.pcds))
@@ -129,42 +116,24 @@ class Controller:
         if self.pcd_manager.current_id > 0:
             self.pcd_manager.get_prev_pcd()
             self.reset()
-            if self.in_labeling:
-                self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())
-                self.bbox_controller.set_active_bbox(0)
-            elif self.in_projection:
-                self.view.init_2d_image()
-                self.point_controller.get_points_from_file()
-
+            self.element_controller.refresh_element_list()
+            self.view.init_2d_image()
+    
     def custom_pcd(self, custom: int) -> None:
         self.save()
         self.pcd_manager.get_custom_pcd(custom)
         self.reset()
-        if self.in_labeling:
-            self.bbox_controller.set_bboxes(self.pcd_manager.get_labels_from_file())
-        elif self.in_projection:
-            self.point_controller.set_points([]) # TODO
-            self.view.init_2d_image()
-
+        self.element_controller.refresh_element_list()
+        self.view.init_2d_image()
+        
     # CONTROL METHODS
-    def save(self) -> None: # TODO Add save behavior for projection mode
+    def save(self) -> None: # TODO Handle for semantic mode
         """Saves all bounding boxes and optionally segmentation labels in the label file."""
-        if self.in_labeling:
-            self.pcd_manager.save_labels_into_file(self.bbox_controller.bboxes)
-
-            if LabelConfig().type == LabelingMode.SEMANTIC_SEGMENTATION:
-                assert self.pcd_manager.pointcloud is not None
-                self.pcd_manager.pointcloud.save_segmentation_labels()
-        elif self.in_projection:
-            self.point_controller.save_points_to_file()
+        self.element_controller.save()
 
     def reset(self) -> None:
         """Resets the controllers and bounding boxes from the current screen."""
-        if self.in_labeling:
-            self.bbox_controller.reset()
-        elif self.in_projection:
-            self.point_controller.reset()
-        
+        self.element_controller.reset()
         self.drawing_mode.reset()
         self.align_mode.reset()
 
@@ -212,6 +181,7 @@ class Controller:
             self.view.gl_widget.selected_side_vertices = np.array([])
             self.view.status_manager.clear_message(Context.SIDE_HOVERED)
 
+    # TODO
     def mouse_clicked_labeling(self, a0 : QtGui.QMouseEvent) -> None:
         """Triggers actions when the user clicks the mouse."""
         self.last_cursor_pos = a0.pos()
@@ -261,7 +231,7 @@ class Controller:
     @in_labeling_only_decorator
     def mouse_double_clicked(self, a0: QtGui.QMouseEvent) -> None:
         """Triggers actions when the user double clicks the mouse."""
-        self.bbox_controller.select_bbox_by_ray(a0.x(), a0.y())
+        self.element_controller.select_bbox_by_ray(a0.x(), a0.y())
 
     def mouse_move_event(self, a0: QtGui.QMouseEvent) -> None:
         """Triggers actions when the user moves the mouse"""
@@ -339,10 +309,11 @@ class Controller:
             and (self.shift_pressed)
             and self.drawing_mode.drawing_strategy is not None
             and (not self.drawing_mode.drawing_strategy.IGNORE_SCROLL)
+            and (self.in_labeling)
         ):
             self.drawing_mode.drawing_strategy.register_scale(a0.angleDelta().y())
-        elif self.side_mode and self.bbox_controller.has_active_bbox():
-            self.bbox_controller.get_active_bbox().change_side(  # type: ignore
+        elif self.side_mode and self.element_controller.has_active_element() and self.in_labeling:
+            self.element_controller.get_active_element().change_side(  # type: ignore
                 self.selected_side, -a0.angleDelta().y() / 4000  # type: ignore
             )  # ToDo implement method
         else:
@@ -369,8 +340,8 @@ class Controller:
             self.pcd_manager.reset_transformations()
             logging.info("Reseted position to default.")
 
-        elif a0.key() == Keys.Key_Delete:  # Delete active bbox
-            self.bbox_controller.delete_current_bbox()
+        elif a0.key() == Keys.Key_Delete:  # Delete active element
+            self.element_controller.delete_current_element()
 
         # Save labels to file
         elif a0.key() == Keys.Key_S and self.ctrl_pressed:
@@ -388,47 +359,47 @@ class Controller:
         # BBOX MANIPULATION
         elif a0.key() == Keys.Key_Z and self.in_labeling:
             # z rotate counterclockwise
-            self.bbox_controller.rotate_around_z()
+            self.element_controller.rotate_around_z()
         elif a0.key() == Keys.Key_X and self.in_labeling:
             # z rotate clockwise
-            self.bbox_controller.rotate_around_z(clockwise=True)
+            self.element_controller.rotate_around_z(clockwise=True)
         elif a0.key() == Keys.Key_C and self.in_labeling:
             # y rotate counterclockwise
-            self.bbox_controller.rotate_around_y()
+            self.element_controller.rotate_around_y()
         elif a0.key() == Keys.Key_V and self.in_labeling:
             # y rotate clockwise
-            self.bbox_controller.rotate_around_y(clockwise=True)
+            self.element_controller.rotate_around_y(clockwise=True)
         elif a0.key() == Keys.Key_B and self.in_labeling:
             # x rotate counterclockwise
-            self.bbox_controller.rotate_around_x()
+            self.element_controller.rotate_around_x()
         elif a0.key() == Keys.Key_N and self.in_labeling:
             # x rotate clockwise
-            self.bbox_controller.rotate_around_x(clockwise=True)
+            self.element_controller.rotate_around_x(clockwise=True)
         #### DUAL EVENTS BASED ON PICKING
         ### IS NOT DRAWING
         elif a0.key() == Keys.Key_W and not self.drawing_mode.is_active() and self.in_labeling:
             # move backward
-            self.bbox_controller.translate_along_y(boost=self.shift_pressed)
+            self.element_controller.translate_along_y(boost=self.shift_pressed)
 
         elif a0.key() == Keys.Key_S and not self.drawing_mode.is_active() and self.in_labeling:
             # move forward
-            self.bbox_controller.translate_along_y(forward=True, boost=self.shift_pressed)
+            self.element_controller.translate_along_y(forward=True, boost=self.shift_pressed)
 
         elif a0.key() == Keys.Key_A and not self.drawing_mode.is_active() and self.in_labeling:
             # move left
-            self.bbox_controller.translate_along_x(left=True, boost=self.shift_pressed)
+            self.element_controller.translate_along_x(left=True, boost=self.shift_pressed)
 
         elif a0.key() == Keys.Key_D and not self.drawing_mode.is_active() and self.in_labeling:
             # move right
-            self.bbox_controller.translate_along_x(boost=self.shift_pressed)
+            self.element_controller.translate_along_x(boost=self.shift_pressed)
 
         elif a0.key() == Keys.Key_Q and not self.drawing_mode.is_active() and self.in_labeling:
             # move up
-            self.bbox_controller.translate_along_z(boost=self.shift_pressed)
+            self.element_controller.translate_along_z(boost=self.shift_pressed)
 
         elif a0.key() == Keys.Key_E and not self.drawing_mode.is_active() and self.in_labeling:
             # move down
-            self.bbox_controller.translate_along_z(down=True, boost=self.shift_pressed)
+            self.element_controller.translate_along_z(down=True, boost=self.shift_pressed)
 
         ### IS DRAWING
         elif a0.key() == Keys.Key_W and self.drawing_mode.is_active():
@@ -471,8 +442,8 @@ class Controller:
             self.pcd_manager.stop_focus()
         elif a0.key() in [Keys.Key_L, Keys.Key_Super_L, Keys.Key_Super_R] and self.in_labeling:
             # lock on to current bbox
-            if self.bbox_controller.has_active_bbox():
-                self.pcd_manager.move_focus(self.bbox_controller.get_active_bbox().center, force=True)
+            if self.element_controller.has_active_element():
+                self.pcd_manager.move_focus(self.element_controller.get_active_element().center, force=True)
             # self.pcd_manager.reset_transformations()
         elif a0.key() in [Keys.Key_R, Keys.Key_Left]:
             # load previous sample
@@ -482,10 +453,10 @@ class Controller:
             self.next_pcd()
         elif a0.key() in [Keys.Key_T, Keys.Key_Up] and self.in_labeling:
             # select previous bbox
-            self.select_relative_bbox(-1)
+            self.element_controller.select_relative_element(-1)
         elif a0.key() in [Keys.Key_G, Keys.Key_Down] and self.in_labeling:
             # select previous bbox
-            self.select_relative_bbox(1)
+            self.element_controller.select_relative_element(1)
         elif a0.key() in [Keys.Key_Y, Keys.Key_Comma]:
             # change bbox class to previous available class
             self.select_relative_class(-1)
@@ -505,17 +476,6 @@ class Controller:
         self.bbox_controller.get_active_bbox().set_classname(new_class)  # type: ignore
         self.bbox_controller.update_all()  # updates UI in SelectBox
 
-    @in_labeling_only_decorator
-    def select_relative_bbox(self, step: int):
-        if step == 0:
-            return
-        max_id = len(self.bbox_controller.bboxes) - 1
-        curr_id = self.bbox_controller.active_bbox_id
-        new_id = curr_id + step
-        corner_case_id = 0 if step > 0 else max_id
-        new_id = new_id if new_id in range(max_id + 1) else corner_case_id
-        self.bbox_controller.set_active_bbox(new_id)
-
     def key_release_event(self, a0: QtGui.QKeyEvent) -> None:
         """Triggers actions when the user releases a key."""
         if a0.key() == Keys.Key_Control:
@@ -525,7 +485,7 @@ class Controller:
             self.shift_pressed = False
 
     def crop_pointcloud_inside_active_bbox(self) -> None:
-        bbox = self.bbox_controller.get_active_bbox()
+        bbox = self.element_controller.get_active_element()
         assert bbox is not None
         assert self.pcd_manager.pointcloud is not None
         points_inside = bbox.is_inside(self.pcd_manager.pointcloud.points)

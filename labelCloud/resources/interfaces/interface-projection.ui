@@ -245,7 +245,7 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_4">
            <item>
-            <widget class="QLabel" name="labels_label">
+            <widget class="QLabel" name="elements_label">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
                <horstretch>0</horstretch>
@@ -272,7 +272,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="current_bbox_title">
+            <widget class="QLabel" name="current_element_label">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
                <horstretch>0</horstretch>
@@ -292,7 +292,7 @@
             </widget>
            </item>
            <item>
-            <layout class="QGridLayout" name="bbox_parameter_grid">
+            <layout class="QGridLayout" name="element_parameter_grid">
              <property name="sizeConstraint">
               <enum>QLayout::SetDefaultConstraint</enum>
              </property>
@@ -302,11 +302,18 @@
              <property name="verticalSpacing">
               <number>6</number>
              </property>
-             <item row="0" column="2">
-              <widget class="QLabel" name="point3d_label_y"/>
+             <item row="1" column="3">
+              <widget class="QLineEdit" name="row2_col3_edit">
+               <property name="maximumSize">
+                <size>
+                 <width>50</width>
+                 <height>25</height>
+                </size>
+               </property>
+              </widget>
              </item>
              <item row="2" column="0">
-              <widget class="QLabel" name="camera_title_label">
+              <widget class="QLabel" name="row3_name_label">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -319,7 +326,7 @@
               </widget>
              </item>
              <item row="1" column="0">
-              <widget class="QLabel" name="point2d_title_label">
+              <widget class="QLabel" name="row2_name_label">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -331,11 +338,18 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
-              <widget class="QLabel" name="point2d_label_x"/>
+             <item row="1" column="2">
+              <widget class="QLineEdit" name="row2_col2_edit">
+               <property name="maximumSize">
+                <size>
+                 <width>50</width>
+                 <height>25</height>
+                </size>
+               </property>
+              </widget>
              </item>
              <item row="0" column="0">
-              <widget class="QLabel" name="point3d_title_label">
+              <widget class="QLabel" name="row1_name_label">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -347,47 +361,101 @@
                </property>
               </widget>
              </item>
-             <item row="2" column="1">
-              <widget class="QLabel" name="camera_label"/>
-             </item>
-             <item row="0" column="3">
-              <widget class="QLabel" name="point3d_label_z"/>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLabel" name="point3d_label_x">
-               <property name="text">
-                <string/>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="2">
-              <widget class="QLabel" name="point2d_label_y"/>
-             </item>
-             <item row="3" column="0">
-              <widget class="QLabel" name="cursor_pos_label">
-               <property name="text">
-                <string>Cursor Pos. :</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <widget class="QLabel" name="cursor_pos_x_label">
+             <item row="3" column="3">
+              <widget class="QLabel" name="row4_col3_label">
                <property name="text">
                 <string> </string>
                </property>
               </widget>
              </item>
              <item row="3" column="2">
-              <widget class="QLabel" name="cursor_pos_y_label">
+              <widget class="QLabel" name="row4_col2_label">
                <property name="text">
                 <string> </string>
                </property>
               </widget>
              </item>
-             <item row="3" column="3">
-              <widget class="QLabel" name="cursor_pos_loc_label">
+             <item row="1" column="1">
+              <widget class="QLineEdit" name="row2_col1_edit">
+               <property name="maximumSize">
+                <size>
+                 <width>50</width>
+                 <height>25</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="row4_name_label">
+               <property name="text">
+                <string>Cursor Pos. :</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QLineEdit" name="row3_col2_edit">
+               <property name="maximumSize">
+                <size>
+                 <width>50</width>
+                 <height>25</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QLabel" name="row4_col1_label">
                <property name="text">
                 <string> </string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="3">
+              <widget class="QLineEdit" name="row3_col3_edit">
+               <property name="maximumSize">
+                <size>
+                 <width>50</width>
+                 <height>25</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QLineEdit" name="row3_col1_edit">
+               <property name="maximumSize">
+                <size>
+                 <width>50</width>
+                 <height>25</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLineEdit" name="row1_col1_edit">
+               <property name="maximumSize">
+                <size>
+                 <width>50</width>
+                 <height>25</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLineEdit" name="row1_col2_edit">
+               <property name="maximumSize">
+                <size>
+                 <width>50</width>
+                 <height>25</height>
+                </size>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="3">
+              <widget class="QLineEdit" name="row1_col3_edit">
+               <property name="maximumSize">
+                <size>
+                 <width>50</width>
+                 <height>25</height>
+                </size>
                </property>
               </widget>
              </item>
@@ -405,7 +473,7 @@
               <number>0</number>
              </property>
              <item>
-              <widget class="QPushButton" name="button_delete_label">
+              <widget class="QPushButton" name="button_delete_element">
                <property name="toolTip">
                 <string>Delete current bounding box. [DEL]</string>
                </property>
@@ -425,7 +493,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="button_deselect_label">
+              <widget class="QPushButton" name="button_deselect_element">
                <property name="toolTip">
                 <string>Deselect current bounding box.</string>
                </property>
@@ -447,7 +515,7 @@
             </layout>
            </item>
            <item>
-            <widget class="QListWidget" name="point_list">
+            <widget class="QListWidget" name="element_list">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Ignored" vsizetype="Maximum">
                <horstretch>0</horstretch>
@@ -546,7 +614,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="button_save_label">
+       <widget class="QPushButton" name="button_save">
         <property name="text">
          <string>Save Calibration</string>
         </property>
@@ -704,23 +772,16 @@
      <bool>true</bool>
     </property>
     <addaction name="act_set_pcd_folder"/>
-    <addaction name="act_set_label_folder"/>
+    <addaction name="act_set_element_folder"/>
    </widget>
-   <widget class="QMenu" name="menuLabels">
+   <widget class="QMenu" name="menuElements">
     <property name="title">
      <string>Labels</string>
     </property>
     <property name="toolTipsVisible">
      <bool>true</bool>
     </property>
-    <widget class="QMenu" name="act_set_default_class">
-     <property name="title">
-      <string>Set Default Object Class …</string>
-     </property>
-    </widget>
-    <addaction name="act_set_default_class"/>
-    <addaction name="act_delete_all_labels"/>
-    <addaction name="act_propagate_labels"/>
+    <addaction name="act_delete_all_elements"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
@@ -729,16 +790,14 @@
     <property name="toolTipsVisible">
      <bool>true</bool>
     </property>
-    <addaction name="act_z_rotation_only"/>
     <addaction name="act_show_floor"/>
     <addaction name="act_show_orientation"/>
     <addaction name="act_save_perspective"/>
     <addaction name="act_align_pcd"/>
-    <addaction name="act_color_with_label"/>
     <addaction name="act_change_settings"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuLabels"/>
+   <addaction name="menuElements"/>
    <addaction name="menuSettings"/>
   </widget>
   <widget class="QStatusBar" name="status_bar"/>
@@ -747,9 +806,9 @@
     <string>Set Point Cloud Folder…</string>
    </property>
   </action>
-  <action name="act_set_label_folder">
+  <action name="act_set_element_folder">
    <property name="text">
-    <string>Set Label Folder…</string>
+    <string>Set Points Folder…</string>
    </property>
   </action>
   <action name="action_loadsinglepcd">
@@ -779,7 +838,7 @@
     <string>Color with labels</string>
    </property>
   </action>
-  <action name="act_delete_all_labels">
+  <action name="act_delete_all_elements">
    <property name="text">
     <string>Delete All Current Labels</string>
    </property>
@@ -886,9 +945,9 @@ if it does not have labels yet.</string>
  <tabstops>
   <tabstop>button_prev_pcd</tabstop>
   <tabstop>button_next_pcd</tabstop>
-  <tabstop>button_save_label</tabstop>
-  <tabstop>button_delete_label</tabstop>
-  <tabstop>point_list</tabstop>
+  <tabstop>button_save</tabstop>
+  <tabstop>button_delete_element</tabstop>
+  <tabstop>element_list</tabstop>
  </tabstops>
  <resources/>
  <connections/>

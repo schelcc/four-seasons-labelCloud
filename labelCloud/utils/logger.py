@@ -75,7 +75,7 @@ class UncolorFormatter(logging.Formatter):
 # Create handlers
 c_handler = logging.StreamHandler()
 f_handler = logging.FileHandler(".labelCloud.log", mode="w")
-c_handler.setLevel(logging.INFO)  # TODO: Automatic coloring
+c_handler.setLevel(logging.DEBUG)  # TODO: Automatic coloring
 f_handler.setLevel(logging.DEBUG)  # TODO: Filter colors
 
 # Create formatters and add it to handlers
@@ -84,7 +84,7 @@ f_handler.setFormatter(UncolorFormatter())
 
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(message)s",
     handlers=[c_handler, f_handler],
 )

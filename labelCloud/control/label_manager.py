@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from typing import List, Optional
 
+from logdecorator import log_on_start
 from ..io.labels import BaseLabelFormat, CentroidFormat, KittiFormat, VerticesFormat
 from ..io.labels.config import LabelConfig
 from ..model import BBox

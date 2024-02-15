@@ -10,12 +10,14 @@ from PyQt5 import QtGui, QtOpenGL
 
 from ..control.alignmode import AlignMode
 from ..control.bbox_controller import BoundingBoxController
-from ..control.projection_controller import ProjectionCorrectionController
+from ..control.manual_calibration_controller import ProjectionCorrectionController
 from ..control.config_manager import config
 from ..control.drawing_manager import LabelDrawingManager, ProjectionDrawingManager
 from ..control.pcd_manager import PointCloudManager
 from ..definitions.types import Color4f, Point2D
 from ..utils import oglhelper
+from ..control.base_element_controller import BaseElementController
+from ..control.drawing_manager import BaseDrawingManager
 
 
 @contextmanager
@@ -52,13 +54,8 @@ class GLWidget(QtOpenGL.QGLWidget):
 
         self.pcd_manager: PointCloudManager = None  # type: ignore
 
-        if self.in_labeling:        
-            self.bbox_controller: BoundingBoxController = None  # type: ignore
-            self.drawing_mode: LabelDrawingManager = None
-        elif self.in_projection:
-            self.projection_controller: ProjectionCorrectionController = None
-            self.drawing_mode: ProjectionDrawingManager = None
-
+        self.element_controller: Optional[BaseElementController] = None
+        self.drawing_mode: Optional[BaseDrawingManager] = None
 
         # Objects to be drawn
         self.crosshair_pos: Point2D = (0, 0)
@@ -69,11 +66,8 @@ class GLWidget(QtOpenGL.QGLWidget):
     def set_pointcloud_controller(self, pcd_manager: PointCloudManager) -> None:
         self.pcd_manager = pcd_manager
 
-    def set_bbox_controller(self, bbox_controller: BoundingBoxController) -> None:
-        self.bbox_controller = bbox_controller
-
-    def set_projection_controller(self, projection_controller: ProjectionCorrectionController) -> None:
-        self.projection_controller = projection_controller
+    def set_element_controller(self, element_controller : BaseElementController) -> None:
+        self.element_controller = element_controller
 
     # QGLWIDGET METHODS
 
@@ -137,21 +131,19 @@ class GLWidget(QtOpenGL.QGLWidget):
 
         if self.in_labeling:
             # Draw active bbox
-            if self.bbox_controller.has_active_bbox():
-                bbox_center = self.bbox_controller.get_active_bbox().center
-                self.bbox_controller.get_active_bbox().draw_bbox(highlighted=True)  # type: ignore
+            if self.element_controller.has_active_element():
+                bbox_center = self.element_controller.get_active_element().center
+                self.element_controller.get_active_element().draw_element(highlighted=True)  # type: ignore
                 if config.getboolean("USER_INTERFACE", "show_orientation"):
-                    self.bbox_controller.get_active_bbox().draw_orientation()  # type: ignore
+                    self.element_controller.get_active_element().draw_orientation()  # type: ignore
 
             else:
                 self.pcd_manager.stop_focus()
 
             # Draw labeled bboxes
-            for bbox in self.bbox_controller.bboxes:  # type: ignore
+            for bbox in self.element_controller.elements:  # type: ignore
                 bbox.draw_bbox()
         elif self.in_projection:
-            if self.projection_controller is not None:
-                self.projection_controller.show_3d_points()
             pass
 
         GL.glPopMatrix()  # restore the previous modelview matrix

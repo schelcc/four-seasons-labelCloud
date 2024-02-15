@@ -33,6 +33,7 @@ if TYPE_CHECKING:
 SUFFIXES = ["_top_left_dd.png", "_top_mid_dd.png", "_top_right_dd.png"]
 
 class SingleImageManager:
+    IMAGE_SCALED_WIDTH: int = 512
     def __init__(self, label : QtWidgets.QLabel, view : "GUI"):
         self.view : "GUI" = view
         self.drawing_mode : Optional[BaseDrawingManager] = None
@@ -66,7 +67,7 @@ class SingleImageManager:
 
         img = QtGui.QImage(QtGui.QImageReader(str(self.current_path)).read())      
         pixmap = QPixmap.fromImage(img)
-        pixmap = pixmap.scaledToWidth(1024)
+        pixmap = pixmap.scaledToWidth(self.IMAGE_SCALED_WIDTH)
     
         pixmap = pixmap.transformed(QtGui.QTransform().scale(self.SCALE, self.SCALE))
 
@@ -96,7 +97,7 @@ class SingleImageManager:
         self.current_path = str(self.view.controller.pcd_manager.pcd_folder.absolute())+'/'+file_name+SUFFIXES[self.camera]
     
     def register_click(self) -> None:
-        print(f"Camera {self.camera} clicked") 
+        pass
 
     def draw_crosshairs(self,
         point: Point2D,
@@ -130,12 +131,12 @@ class SingleImageManager:
         )            
             
     def draw_pts(self, pixmap : QPixmap, thickness : int = 3) -> None:
-        all_pts = self.view.controller.point_controller.points
+        all_pts = self.view.controller.element_controller.elements
         
         if len(all_pts) == 0: 
             return
 
-        active_pt = self.view.controller.point_controller.active_point_id
+        active_pt = self.view.controller.element_controller.active_element_id
         
         for idx, pt in enumerate(all_pts):
             _, p2d, cam = pt

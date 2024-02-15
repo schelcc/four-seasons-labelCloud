@@ -6,7 +6,7 @@ def in_labeling_only_decorator(func):
     """
     Only execute function in labeling usage mode
     """
-    
+   
     @wraps(func)
     def wrapper(*args, **kwargs):
         if config.get("FILE", "usage_mode") == "label":

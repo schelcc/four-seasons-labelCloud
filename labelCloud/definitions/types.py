@@ -1,11 +1,11 @@
-from typing import Tuple
+from typing import Tuple, Union
 from . import Camera
 from PyQt5.QtGui import QColor
+import logging
 
 
 Point2D = Tuple[float, float]
 Point3D = Tuple[float, float, float]
-PointPairCamera = Tuple[Point3D, Point2D, Camera]
 
 Rotations3D = Tuple[float, float, float]  # euler angles in degrees
 
@@ -15,6 +15,21 @@ Dimensions3D = Tuple[float, float, float]  # length, width, height in meters
 
 Color4f = Tuple[float, float, float, float]  # type alias for type hinting
 
+class PointPairCamera():
+    def __init__(self, p3d : Point3D, p2d : Point2D, cam : Camera):
+        self.p3d = p3d 
+        self.p2d = p2d
+        self.cam = cam
+        self.data = (self.p3d, self.p2d, self.cam)
+        
+    def __str__(self):
+        return f"{self.cam},{self.p3d[0]},{self.p3d[1]},{self.p3d[2]},{self.p2d[0]},{self.p2d[1]},{self.cam}"
+    
+    def __repr__(self):
+        return f"({self.__str__()})"
+
+    def __iter__(self):
+        yield from self.data
 
 class Color3f(tuple):
     def __new__(cls, r, g, b):
