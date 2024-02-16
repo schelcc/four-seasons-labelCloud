@@ -216,7 +216,7 @@ class Controller:
     
     def image_clicked(self, a0 : QtGui.QMouseEvent, which_image) -> None:
         camera : Camera = self.view.image_label_list.index(which_image)
-        manager : SingleImageManager = self.view.image_manager_list[camera]
+        manager = self.view.image_manager_list[camera]
         
         self.drawing_mode.register_point_2d(a0.x(), a0.y(), camera)
         manager.register_click()
@@ -318,6 +318,11 @@ class Controller:
         else:
             self.pcd_manager.zoom_into(a0.angleDelta().y())
             self.scroll_mode = True
+    
+    def image_mouse_scroll_event(self, a0: QtGui.QWheelEvent) -> None:
+        if self.ctrl_pressed:
+            SingleImageManager.zoom(a0)
+            self.view.init_2d_image()
 
     def key_press_event(self, a0: QtGui.QKeyEvent) -> None:
         """Triggers actions when the user presses a key."""

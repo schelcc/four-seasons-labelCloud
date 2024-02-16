@@ -8,33 +8,28 @@ import shutil
 import traceback
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, Set, Union
+import numpy as np
 
 import pkg_resources
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtCore import QEvent
 from PyQt5.QtGui import QPixmap, QPainter, QPen
-from PyQt5.QtWidgets import QLabel
 
-from ..control.config_manager import config
-from ..definitions import Color3f, LabelingMode, Camera
+from ..definitions import Color3f, Camera
 from ..definitions.types import Point2D
-from ..io.labels.config import LabelConfig
-from ..io.pointclouds import BasePointCloudHandler
-from ..labeling_strategies import PickingStrategy, SpanningStrategy
-from ..proj_correction_strategies import PointMatchCorrection
-from ..model.point_cloud import PointCloud
 from ..utils.decorators import in_labeling_only_decorator, in_projection_only_decorator
 from ..control.base_drawing_manager import BaseDrawingManager
 
 if TYPE_CHECKING:
-    from ..control.controller import Controller
     from ..control.view import GUI
 
 SUFFIXES = ["_top_left_dd.png", "_top_mid_dd.png", "_top_right_dd.png"]
 
+
 class SingleImageManager:
-    IMAGE_SCALED_WIDTH: int = 2048//4
-    IMAGE_SCALED_HEIGHT: int = 1536//4
+    WIDTH = 2048
+    HEIGHT = 1536
+    ZOOM: float = 1.0
     def __init__(self, label : QtWidgets.QLabel, view : "GUI"):
         self.view : "GUI" = view
         self.drawing_mode : Optional[BaseDrawingManager] = None
@@ -46,26 +41,34 @@ class SingleImageManager:
         self.base_image : Optional[QPixmap] = None
         self.cursor_pos : Optional[Point2D] = None
 
-        self.SCALE = config.getfloat("USER_INTERFACE", "image_scale")
-
         # Draw action flags
         self.do_draw_cursor : bool = False
         self.do_draw_bboxes : bool = False 
         self.do_draw_calib_points : bool = False
-        
-    def detransform(self, point : Point2D) -> Point2D:
+    
+    @staticmethod 
+    def detransform(point : Point2D) -> Point2D:
         """Perform pixmap transformations in reverse to match pixels properly"""
         new_x, new_y = point 
-        new_x *= (4*(1/self.SCALE))
-        new_y *= (4*(1/self.SCALE))
         return Point2D(new_x, new_y)
 
-    def transform_pt(self, point: Point2D) -> Point2D:
+    @staticmethod
+    def transform_pt(point: Point2D) -> Point2D:
         """Perform pixmap transformations to match true pt to scaled pt"""
-        new_x, new_y = point 
-        new_x *= 1/(4*(1/self.SCALE))
-        new_y *= 1/(4*(1/self.SCALE))
-        return Point2D(new_x, new_y)
+        x, y = point 
+        mat = np.array([[1, 0, x], [0, 1, y], [0, 0, 1]])
+        tr = np.array([[SingleImageManager.ZOOM, 0, 0], [0, SingleImageManager.ZOOM, 0], [0, 0, 1]])
+        a = np.matmul(tr, mat)
+        vec = a[:, 2]
+        x, y, s = vec
+        x /= s
+        y /= s
+        return Point2D(x, y)
+
+    @staticmethod
+    def zoom(a0 : QtGui.QWheelEvent) -> None:
+        """Register zoom"""
+        SingleImageManager.ZOOM += a0.angleDelta().y() / (4000*(2.71**SingleImageManager.ZOOM))
 
     def set_view(self, view : "GUI") -> None:
         self.view = view
@@ -85,23 +88,35 @@ class SingleImageManager:
 
         img = QtGui.QImage(QtGui.QImageReader(str(self.current_path)).read())      
         pixmap = QPixmap.fromImage(img)
-        pixmap = pixmap.scaled(self.IMAGE_SCALED_WIDTH, self.IMAGE_SCALED_HEIGHT, QtCore.Qt.KeepAspectRatio)
     
-        pixmap = pixmap.transformed(QtGui.QTransform().scale(self.SCALE, self.SCALE))
+        #pixmap = pixmap.transformed(QtGui.QTransform().scale(self.SCALE, self.SCALE))
 
         self.base_image = pixmap.copy()
 
+    def scale_pixmap(self, pixmap : QPixmap) -> QPixmap:
+        """Scale a pixmap by applying class attribute ZOOM"""
+        return pixmap.scaled(self.WIDTH*self.ZOOM,
+                             self.HEIGHT*self.ZOOM,
+                             QtCore.Qt.KeepAspectRatio)
+
     def render(self) -> None:
-        if self.base_image is None or self.view is None or self.drawing_mode is None:
+        if self.base_image is None \
+            or self.view is None \
+            or self.drawing_mode is None:
             return
         
         pixmap = self.base_image.copy() 
         
-        if self.view.PROJECTION and self.drawing_mode.is_active():
-            self.draw_cursor(pixmap) 
+        #if self.view.PROJECTION:
+        #    self.draw_pts(pixmap)
         
-        if self.view.PROJECTION:
-            self.draw_pts(pixmap)
+        ### PRE SCALE ABOVE ### 
+        # pixmap = self.scale_pixmap(pixmap)
+        ### POST SCALE BELOW ###
+         
+        #if self.view.PROJECTION:# and self.drawing_mode.is_active():
+        #    self.draw_cursor(pixmap) 
+
          
         self.label.setPixmap(pixmap)
         self.label.update()
@@ -144,12 +159,12 @@ class SingleImageManager:
             self.cursor_pos,
             pixmap,
             color=QtCore.Qt.red,
-            thickness=1,
-            scale=2,
+            thickness=5,
+            scale=10,
             line_type=QtCore.Qt.DashLine
         )            
             
-    def draw_pts(self, pixmap : QPixmap, thickness : int = 1) -> None:
+    def draw_pts(self, pixmap : QPixmap, thickness : int = 5) -> None:
         all_pts = self.view.controller.element_controller.elements
         
         if len(all_pts) == 0: 
@@ -158,8 +173,9 @@ class SingleImageManager:
         active_pt = self.view.controller.element_controller.active_element_id
         
         for idx, pt in enumerate(all_pts):
-            _, p2d, cam = pt
-            
+            cam = pt.cam
+            p2d = pt.p2d_true if pt.p2d_true is not None else pt.p2d
+
             if cam != self.camera: continue        
 
             color = QtCore.Qt.green if idx == active_pt else QtCore.Qt.blue

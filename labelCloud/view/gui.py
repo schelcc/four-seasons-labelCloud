@@ -491,6 +491,9 @@ class GUI(QtWidgets.QMainWindow):
             self.controller.mouse_scroll_event(event)
             if self.LABELING:
                 self.update_bbox_stats(self.controller.element_controller.get_active_element())
+        elif (event.type() == QEvent.Wheel) and (event_object in self.image_label_list):
+            self.controller.image_mouse_scroll_event(event)
+            self.refresh_2d_image()
 
         elif event.type() == QEvent.MouseButtonDblClick and ( # MOUSE DOUBLE CLICK
             event_object == self.gl_widget
@@ -533,6 +536,11 @@ class GUI(QtWidgets.QMainWindow):
         """Searches for a 2D image with the point cloud name and displays it in a new window."""
         for lbl in self.image_manager_list:
             lbl.load_image()
+            lbl.render()
+
+    def refresh_2d_image(self):
+        """Re-renders images w/o refreshing pixmaps"""
+        for lbl in self.image_manager_list:
             lbl.render()
             
 ##        P_matrix = config.getlist("FILE", "pmatrix_list")

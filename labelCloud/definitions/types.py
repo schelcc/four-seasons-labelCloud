@@ -16,7 +16,11 @@ Color4f = Tuple[float, float, float, float]  # type alias for type hinting
 
 class Point2D(tuple):
     def __new__(cls, x, y):
-        return super(Point2D, cls).__new__(cls, (x, y))
+        return super(Point2D, cls).__new__(cls, (float(x), float(y)))
+
+    def scale(self, scale:float):
+        """Scale the points in the tuple by scale param"""
+        return Point2D(self[0]*scale, self[1]*scale)
     
     def __str__(self):
         return f"{self[0], self[1]}"
