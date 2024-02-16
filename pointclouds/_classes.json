@@ -32,8 +32,8 @@
         }
     ],
     "default": 0,
-    "type": "object_detection",
-    "format": "centroid_abs",
+    "type": "projection_correction",
+    "format": "point_match_raw",
     "created_with": {
         "name": "labelCloud",
         "version": "1.0.1"
