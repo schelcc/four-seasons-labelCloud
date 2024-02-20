@@ -416,6 +416,7 @@ class GUI(QtWidgets.QMainWindow):
 
     def refresh_images(self) -> None:
         for idx, manager in enumerate(self.img_manager_list):
+            manager.refresh_base_pixmap()
             manager.render()
 
        
