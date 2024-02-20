@@ -176,7 +176,7 @@ class Controller:
 
     def image_clicked(self, pos : Point2D, cam : Camera) -> None:
         logging.debug(f"controller registered camera '{cam}' clicked at ({pos[0]}, {pos[1]})")
-        
+        self.drawing_mode.register_point_2d(pos[0], pos[1], cam) 
 
     # TODO
     def mouse_clicked_labeling(self, a0 : QtGui.QMouseEvent) -> None:

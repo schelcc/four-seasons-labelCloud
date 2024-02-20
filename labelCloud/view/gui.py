@@ -418,8 +418,6 @@ class GUI(QtWidgets.QMainWindow):
         for idx, manager in enumerate(self.img_manager_list):
             manager.refresh_base_pixmap()
             manager.render()
-
-       
                       
     def set_checkbox_states(self) -> None:
         if self.LABELING:
