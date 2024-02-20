@@ -10,8 +10,7 @@ from ..utils import oglhelper as ogl
 from ..io.labels.config import LabelConfig
 
 if TYPE_CHECKING:
-    from ..view.gui import GUI
-    
+    from ..view.gui import GUI 
 
 class PointMatchCorrection(BaseProjCorrection):
     PREVIEW: bool = True
@@ -19,7 +18,7 @@ class PointMatchCorrection(BaseProjCorrection):
     def __init__(self, view: "GUI") -> None:
         super().__init__(view)
         self.view.status_manager.update_status(
-            "Please pick the 3D point to match",
+            "Please pick 1 3D point and 1 2D point",
             mode=Mode.DRAWING,
         )
         self.tmp_p2d : Optional[Point2D] = None
