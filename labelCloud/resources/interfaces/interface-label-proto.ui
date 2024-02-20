@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>2279</width>
-    <height>1220</height>
+    <width>2678</width>
+    <height>1336</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -23,7 +23,7 @@
      <rect>
       <x>9</x>
       <y>9</y>
-      <width>1231</width>
+      <width>1810</width>
       <height>1140</height>
      </rect>
     </property>
@@ -3005,178 +3005,94 @@
          </property>
         </widget>
        </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <property name="bottomMargin">
+          <number>5</number>
+         </property>
+         <item>
+          <layout class="QVBoxLayout" name="camera_middle_layout">
+           <item>
+            <widget class="QGraphicsView" name="camera_left_graphics">
+             <property name="minimumSize">
+              <size>
+               <width>500</width>
+               <height>500</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>1500</width>
+               <height>1500</height>
+              </size>
+             </property>
+             <property name="visible_labeling" stdset="0">
+              <bool>true</bool>
+             </property>
+             <property name="visible_projection" stdset="0">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="camera_right_layout">
+           <item>
+            <widget class="QGraphicsView" name="camera_middle_graphics">
+             <property name="minimumSize">
+              <size>
+               <width>500</width>
+               <height>500</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>1500</width>
+               <height>1500</height>
+              </size>
+             </property>
+             <property name="visible_labeling" stdset="0">
+              <bool>true</bool>
+             </property>
+             <property name="visible_projection" stdset="0">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QVBoxLayout" name="camera_left_layout">
+           <item>
+            <widget class="QGraphicsView" name="camera_right_graphics">
+             <property name="minimumSize">
+              <size>
+               <width>500</width>
+               <height>500</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>1500</width>
+               <height>1500</height>
+              </size>
+             </property>
+             <property name="visible_labeling" stdset="0">
+              <bool>true</bool>
+             </property>
+             <property name="visible_projection" stdset="0">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
       </layout>
      </item>
     </layout>
-   </widget>
-   <widget class="QWidget" name="horizontalLayoutWidget_2">
-    <property name="geometry">
-     <rect>
-      <x>1310</x>
-      <y>200</y>
-      <width>917</width>
-      <height>543</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_6">
-     <item>
-      <widget class="QLabel" name="camera_left">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>100</height>
-        </size>
-       </property>
-       <property name="lineWidth">
-        <number>2</number>
-       </property>
-       <property name="text">
-        <string>CameraLeft</string>
-       </property>
-       <property name="visible_projection" stdset="0">
-        <bool>true</bool>
-       </property>
-       <property name="visible_labeling" stdset="0">
-        <bool>true</bool>
-       </property>
-       <property name="connections" stdset="0">
-        <string/>
-       </property>
-       <property name="on_clicked" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_pressed" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_triggered" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_toggled" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_valueChanged" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_currentTextChanged" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_editingFinished" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_currentRowChanged" stdset="0">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="camera_middle">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>100</height>
-        </size>
-       </property>
-       <property name="lineWidth">
-        <number>2</number>
-       </property>
-       <property name="text">
-        <string>CameraMiddle</string>
-       </property>
-       <property name="visible_projection" stdset="0">
-        <bool>true</bool>
-       </property>
-       <property name="visible_labeling" stdset="0">
-        <bool>true</bool>
-       </property>
-       <property name="connections" stdset="0">
-        <string/>
-       </property>
-       <property name="on_clicked" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_pressed" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_triggered" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_toggled" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_valueChanged" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_currentTextChanged" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_editingFinished" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_currentRowChanged" stdset="0">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="camera_right">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>100</height>
-        </size>
-       </property>
-       <property name="lineWidth">
-        <number>2</number>
-       </property>
-       <property name="text">
-        <string>CameraRight</string>
-       </property>
-       <property name="visible_projection" stdset="0">
-        <bool>true</bool>
-       </property>
-       <property name="visible_labeling" stdset="0">
-        <bool>true</bool>
-       </property>
-       <property name="connections" stdset="0">
-        <string/>
-       </property>
-       <property name="on_clicked" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_pressed" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_triggered" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_toggled" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_valueChanged" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_currentTextChanged" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_editingFinished" stdset="0">
-        <bool>false</bool>
-       </property>
-       <property name="on_currentRowChanged" stdset="0">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QGraphicsView" name="graphicsView">
-    <property name="geometry">
-     <rect>
-      <x>1420</x>
-      <y>780</y>
-      <width>661</width>
-      <height>192</height>
-     </rect>
-    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -3184,7 +3100,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>2279</width>
+     <width>2678</width>
      <height>20</height>
     </rect>
    </property>

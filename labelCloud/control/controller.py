@@ -11,12 +11,11 @@ from PyQt5.QtCore import Qt as Keys
 
 from functools import wraps
 
-from ..definitions import BBOX_SIDES, Colors, Context, LabelingMode, Camera
+from ..definitions import BBOX_SIDES, Colors, Context, LabelingMode, Camera, Point2D
 from ..io.labels.config import LabelConfig
 from ..utils import oglhelper
 from ..view.gui import GUI
 from ..labeling_strategies import PickingStrategy
-from ..image_management.image_manager import SingleImageManager
 from .alignmode import AlignMode
 from .bbox_controller import BoundingBoxController
 from .config_manager import config
@@ -74,9 +73,6 @@ class Controller:
         self.element_controller.set_view(self.view)
         self.element_controller.set_pcd_manager(self.pcd_manager)
         
-        for manager in self.view.image_manager_list:
-            manager.drawing_mode = self.drawing_mode
-        
         self.pcd_manager.set_view(self.view)
         self.drawing_mode.set_view(self.view)
         self.align_mode.set_view(self.view)
@@ -86,8 +82,6 @@ class Controller:
         # Read labels from folders
         self.pcd_manager.read_pointcloud_folder()
         self.next_pcd(save=False)
-
-        self.view.init_2d_image()
 
     def loop_gui(self) -> None:
         """Function collection called during each event loop iteration."""
@@ -104,7 +98,7 @@ class Controller:
             self.pcd_manager.get_next_pcd()
             self.reset()
             self.element_controller.refresh_element_list() # Handle for label propagation
-            self.view.init_2d_image()
+            self.view.refresh_images()
 
         else:
             self.view.update_progress(len(self.pcd_manager.pcds))
@@ -116,14 +110,14 @@ class Controller:
             self.pcd_manager.get_prev_pcd()
             self.reset()
             self.element_controller.refresh_element_list()
-            self.view.init_2d_image()
+            self.view.refresh_images()
     
     def custom_pcd(self, custom: int) -> None:
         self.save()
         self.pcd_manager.get_custom_pcd(custom)
         self.reset()
         self.element_controller.refresh_element_list()
-        self.view.init_2d_image()
+        self.view.refresh_images()
         
     # CONTROL METHODS
     def save(self) -> None: # TODO Handle for semantic mode
@@ -180,6 +174,10 @@ class Controller:
             self.view.gl_widget.selected_side_vertices = np.array([])
             self.view.status_manager.clear_message(Context.SIDE_HOVERED)
 
+    def image_clicked(self, pos : Point2D, cam : Camera) -> None:
+        logging.debug(f"controller registered camera '{cam}' clicked at ({pos[0]}, {pos[1]})")
+        
+
     # TODO
     def mouse_clicked_labeling(self, a0 : QtGui.QMouseEvent) -> None:
         """Triggers actions when the user clicks the mouse."""
@@ -214,13 +212,6 @@ class Controller:
                 self.view.gl_widget.get_world_coords(a0.x(), a0.y(), correction=False)
             )
     
-    def image_clicked(self, a0 : QtGui.QMouseEvent, which_image) -> None:
-        camera : Camera = self.view.image_label_list.index(which_image)
-        manager = self.view.image_manager_list[camera]
-        
-        self.drawing_mode.register_point_2d(a0.x(), a0.y(), camera)
-        manager.register_click()
-
     def mouse_clicked(self, a0 : QtGui.QMouseEvent) -> None:
         if self.LABELING:
             self.mouse_clicked_labeling(a0)
@@ -236,8 +227,6 @@ class Controller:
         """Triggers actions when the user moves the mouse"""
         self.curr_cursor_pos = a0.pos()  # Updates the current mouse cursor position
 
-        if self.PROJECTION:
-            pass
         # Methods that use absolute cursor position
         if self.drawing_mode.is_active() and (not self.ctrl_pressed):
             if self.LABELING:
@@ -318,17 +307,9 @@ class Controller:
         else:
             self.pcd_manager.zoom_into(a0.angleDelta().y())
             self.scroll_mode = True
-    
-    def image_mouse_scroll_event(self, a0: QtGui.QWheelEvent) -> None:
-        if self.ctrl_pressed:
-            SingleImageManager.zoom(a0)
-            self.view.init_2d_image()
 
     def key_press_event(self, a0: QtGui.QKeyEvent) -> None:
         """Triggers actions when the user presses a key."""
-
-        # print(a0.key())
-
         # Reset position to intial value
         if a0.key() == Keys.Key_Control:
             self.ctrl_pressed = True
@@ -408,7 +389,6 @@ class Controller:
         ### IS DRAWING
         elif a0.key() == Keys.Key_W and self.drawing_mode.is_active():
             # move backward
-            # self.drawing_mode.drawing_strategy.register_translate_y
             perspective = self.pcd_manager.get_perspective()
             self.drawing_mode.drawing_strategy.register_trans_y(perspective, boost=self.shift_pressed)
 

@@ -32,11 +32,13 @@ from ..labeling_strategies import PickingStrategy, SpanningStrategy
 from ..proj_correction_strategies import PointMatchCorrection
 from ..model.point_cloud import PointCloud
 from ..utils.decorators import in_labeling_only_decorator, in_projection_only_decorator
-from ..image_management.image_manager import SingleImageManager
 from .settings_dialog import SettingsDialog  # type: ignore
 from .startup.dialog import StartupDialog
 from .status_manager import StatusManager
 from .viewer import GLWidget
+
+# TESTING
+from ..image_management.image_manager import SingleImageManager
 
 if TYPE_CHECKING:
     from ..control.controller import Controller
@@ -134,7 +136,7 @@ class GUI(QtWidgets.QMainWindow):
 
         uic.loadUi(
             pkg_resources.resource_filename(
-                "labelCloud.resources.interfaces", f"interface-label.ui"
+                "labelCloud.resources.interfaces", f"interface-label-proto.ui"
             ),
             self,
         )
@@ -264,33 +266,23 @@ class GUI(QtWidgets.QMainWindow):
 
         self.button_point_match: QtWidgets.QPushButton # In projection only
 
-        self.camera_left: QtWidgets.QLabel
-        self.camera_right: QtWidgets.QLabel
-        self.camera_middle: QtWidgets.QLabel
+        self.camera_left_graphics: QtWidgets.QGraphicsView
+        self.camera_left_manager: SingleImageManager = SingleImageManager(self.camera_left_graphics, self)
+        self.camera_left_manager.set_camera(0)
 
-        self.manager_camera_left: SingleImageManager = SingleImageManager(self.camera_left, self)
-        self.manager_camera_middle: SingleImageManager = SingleImageManager(self.camera_middle, self)
-        self.manager_camera_right: SingleImageManager = SingleImageManager(self.camera_right, self)
-
-        self.image_label_list = [
-            self.camera_left,
-            self.camera_middle,
-            self.camera_right,
-        ]
+        self.camera_middle_graphics : QtWidgets.QGraphicsView
+        self.camera_middle_manager: SingleImageManager = SingleImageManager(self.camera_middle_graphics, self)
+        self.camera_middle_manager.set_camera(1)
         
-        self.image_manager_list = [
-            self.manager_camera_left,
-            self.manager_camera_middle,
-            self.manager_camera_right,
-        ]
-
+        self.camera_right_graphics: QtWidgets.QGraphicsView
+        self.camera_right_manager: SingleImageManager = SingleImageManager(self.camera_right_graphics, self)
+        self.camera_right_manager.set_camera(2)
+        
+        self.img_manager_list = [self.camera_left_manager, self.camera_middle_manager, self.camera_right_manager]
         self.populate_ui_list()
         
         self.cam_list = config.getlist("FILE", "image_list")
 
-        for idx, item in enumerate(self.image_manager_list):
-            item.set_camera(idx)
-        
         self.controller = control
         self.controller.pcd_manager.pcd_postfix = config.get("POINTCLOUD", "pointcloud_postfix") # LXH
 
@@ -366,9 +358,6 @@ class GUI(QtWidgets.QMainWindow):
             self.row3_name_label,
             self.row4_name_label,
             self.button_point_match,
-            self.camera_left,
-            self.camera_right,
-            self.camera_middle,
         ]
 
     def prop_fallback(self, ui_element, prop, fallback):
@@ -376,7 +365,7 @@ class GUI(QtWidgets.QMainWindow):
             return fallback 
         else:
             return ui_element.property(prop)
-    
+     
     def connect_events(self) -> None:
         for ui_element in self.all_ui_elements:
             
@@ -419,6 +408,17 @@ class GUI(QtWidgets.QMainWindow):
                             
                         exec(f"ui_element.{conn_event}.connect({conn})", _globals)
         logging.debug(" ")
+
+    def init_images(self) -> None:
+        for idx, manager in enumerate(self.img_manager_list):
+            manager.set_camera(idx)
+            manager.refresh_image_path()
+
+    def refresh_images(self) -> None:
+        for idx, manager in enumerate(self.img_manager_list):
+            manager.render()
+
+       
                       
     def set_checkbox_states(self) -> None:
         if self.LABELING:
@@ -466,34 +466,11 @@ class GUI(QtWidgets.QMainWindow):
                 self.controller.mouse_move_event(event)
                 if self.LABELING:
                     self.update_bbox_stats(self.controller.element_controller.get_active_element())
-            if (event_object in self.image_label_list):
-                idx = self.image_label_list.index(event_object)
-                for cam, manager in enumerate(self.image_manager_list):
-                    manager.cursor_pos = (event.x(), event.y()) if cam == idx else None 
-                    manager.render()
-            else:
-                for cam, manager in enumerate(self.image_manager_list):
-                    manager.cursor_pos = None 
-
-#            if self.PROJECTION:
-#                locs = ["Left", "Middle", "Right", "Cloud", "Other"]
-#                if event_object in self.image_label_list:
-#                    idx = self.image_label_list.index(event_object)
-#                elif event_object == self.gl_widget:
-#                    idx = 3
-#                else:
-#                    idx = 4
-#                self.cursor_pos_loc_label.setText(locs[idx])
-#                self.cursor_pos_x_label.setText(str(event.x()))
-#                self.cursor_pos_y_label.setText(str(event.y()))
                  
         elif (event.type() == QEvent.Wheel) and (event_object == self.gl_widget): # MOUSE SCROLL
             self.controller.mouse_scroll_event(event)
             if self.LABELING:
                 self.update_bbox_stats(self.controller.element_controller.get_active_element())
-        elif (event.type() == QEvent.Wheel) and (event_object in self.image_label_list):
-            self.controller.image_mouse_scroll_event(event)
-            self.refresh_2d_image()
 
         elif event.type() == QEvent.MouseButtonDblClick and ( # MOUSE DOUBLE CLICK
             event_object == self.gl_widget
@@ -508,12 +485,14 @@ class GUI(QtWidgets.QMainWindow):
             if self.LABELING:
                 self.update_bbox_stats(self.controller.element_controller.get_active_element())
 
-        elif (event.type() == QEvent.MouseButtonPress) and ( # MOUSE SINGLE CLICK - ON IMAGE
-            event_object in self.image_label_list
-        ):
-            self.controller.image_clicked(event, event_object)
+        #### TESTING
+#        if (event.type() == QEvent.MouseButtonPress) and (event_object == self.camera_left_graphics):
+#            self.controller.image_drag(event)
+#
+#        if (event.type() == QEvent.Wheel) and (event_object == self.camera_left_graphics):
+#            self.controller.img_scroll_event(event)
 
-        elif (event.type() == QEvent.MouseButtonPress) and (
+        if (event.type() == QEvent.MouseButtonPress) and (
             self.LABELING
         ) and ( # ???
             event_object != self.current_class_dropdown
@@ -531,23 +510,6 @@ class GUI(QtWidgets.QMainWindow):
     def show_settings_dialog(self) -> None:
         dialog = SettingsDialog(self)
         dialog.exec()
-
-    def init_2d_image(self):
-        """Searches for a 2D image with the point cloud name and displays it in a new window."""
-        for lbl in self.image_manager_list:
-            lbl.load_image()
-            lbl.render()
-
-    def refresh_2d_image(self):
-        """Re-renders images w/o refreshing pixmaps"""
-        for lbl in self.image_manager_list:
-            lbl.render()
-            
-##        P_matrix = config.getlist("FILE", "pmatrix_list")
-##        P_matrix = np.array(P_matrix).reshape(-1,3,4)
-##        margin = 100
-#            self.image_label_list[i].show()
-   
 
     def show_no_pointcloud_dialog(
         self, pcd_folder: Path, pcd_extensions: Set[str]
