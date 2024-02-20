@@ -34,13 +34,10 @@ class PointMatchRaw(BaseLabelFormat):
             
             for line in lines[1:]:
                 try:
-                    cam, p3dx, p3dy, p3dz, p2dx, p2dy, p2dx_true, p2dy_true = line.split(',')
+                    cam, p3dx, p3dy, p3dz, p2dx, p2dy = line.split(',')
                     p3d = Point3D(float(p3dx), float(p3dy), float(p3dz))
                     p2d = Point2D(float(p2dx), float(p2dy))
-                    p2d_true = None
-                    if float(p2dx_true) >= 0 and float(p2dy_true) >= 0:
-                        p2d_true = Point2D(p2dx_true, p2dy_true)
-                    point = PointPairCamera(p3d, p2d, int(cam), p2d_true)
+                    point = PointPairCamera(p3d, p2d, int(cam))
                     points.append(point)
                 except ValueError:
                     logging.warning(f"Error reading points from {label_path}, it likely has no points")
@@ -51,7 +48,7 @@ class PointMatchRaw(BaseLabelFormat):
     def export_labels(self, points: List[PointPairCamera], pcd_path: Path) -> None:
         if len(points) == 0:
             return
-        output = "camera,point3d_x_y_z,point2d_x_y,true_point2d_x_y\n"
+        output = "camera,point3d_x_y_z,point2d_x_y\n"
         output += '\n'.join([str(x) for x in points])
         output += '\n'
         path_to_file = self.save_label_to_file(pcd_path, output, suffix="_points")

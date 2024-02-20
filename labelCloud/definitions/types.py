@@ -17,10 +17,6 @@ Color4f = Tuple[float, float, float, float]  # type alias for type hinting
 class Point2D(tuple):
     def __new__(cls, x, y):
         return super(Point2D, cls).__new__(cls, (float(x), float(y)))
-
-    def scale(self, scale:float):
-        """Scale the points in the tuple by scale param"""
-        return Point2D(self[0]*scale, self[1]*scale)
     
     def __str__(self):
         return f"{self[0], self[1]}"
@@ -46,16 +42,11 @@ class PointPairCamera():
         p2d_true : Optional[Point2D] = None):
         self.p3d = p3d 
         self.p2d = p2d
-        self.p2d_true = p2d_true # To hold detransformed pt
         self.cam = cam
         self.data = (self.p3d, self.p2d, self.cam)
         
     def __str__(self):
-        if self.p2d_true is not None:
-            return f"{self.cam},{self.p3d[0]},{self.p3d[1]},{self.p3d[2]},{self.p2d[0]},{self.p2d[1]},{self.p2d_true[0]},{self.p2d_true[1]}"
-        else:
-            logging.warning("Returning string of a PointPairCamera which doesn't have a true p2d -- this may be an erroneous read/write")
-            return f"{self.cam},{self.p3d[0]},{self.p3d[1]},{self.p3d[2]},{self.p2d[0]},{self.p2d[1]},-1,-1"
+        return f"{self.cam},{self.p3d[0]},{self.p3d[1]},{self.p3d[2]},{self.p2d[0]},{self.p2d[1]}"
 
     def __repr__(self):
         return f"({self.__str__()})"
