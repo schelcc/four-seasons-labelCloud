@@ -243,10 +243,12 @@ class SingleImageManager:
         if self.cursor_p2d is None:
             return
 
+        color = QtCore.Qt.yellow if self.view.controller.drawing_mode.is_active() else QtCore.Qt.red
+
         self.draw_crosshairs(
             self.cursor_p2d,
             pixmap,
-            color=QtCore.Qt.red,
+            color=color,
             thickness=2,
             scale=7,
             line_type=QtCore.Qt.DashLine
