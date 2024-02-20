@@ -54,7 +54,7 @@ class SingleImageManager:
         self.graphics_view.mouseReleaseEvent = lambda event : self.mouse_up(event)
         self.graphics_view.mouseMoveEvent = lambda event : self.mouse_move(event)
         self.graphics_view.setMouseTracking(True) # Forces Qt to register a mouseMove w/o any buttons pressed
-
+        
     def set_camera(self, cam) -> None:
         self.camera = cam
 
@@ -85,9 +85,27 @@ class SingleImageManager:
 
     def mouse_move(self, event : QtGui.QMouseEvent) -> None:
         """mouseMove event handler"""
+        # Calculate corrected pos
         corr_pos = self.event_pos_to_img(event.pos())
         self.cursor_p2d = (corr_pos.x(), corr_pos.y()) if corr_pos is not None else None
 
+        cursor_shape = QtCore.Qt.ArrowCursor
+        if self.is_mouse_down:
+            cursor_shape = QtCore.Qt.ClosedHandCursor
+        elif self.view.controller.drawing_mode.is_active():
+            cursor_shape = QtCore.Qt.CrossCursor
+
+        self.graphics_view.setCursor(cursor_shape)
+        # Update UI Cursor position readout
+        if corr_pos is not None:
+            self.view.row4_col1_label.setText(f"{round(corr_pos.x(), ndigits=2)}")
+            self.view.row4_col2_label.setText(f"{round(corr_pos.y(), ndigits=2)}")
+        else:
+            self.view.row4_col1_label.setText("N/A")
+            self.view.row4_col2_label.setText("N/A")
+        
+        self.view.row4_col3_label.setText(str(Camera(self.camera)).title())
+ 
         if self.is_mouse_down:
             self.drag(event.pos())
 
@@ -164,7 +182,8 @@ class SingleImageManager:
         pcd_name = self.view.controller.pcd_manager.pcd_path.stem 
         postfix_length = len(self.view.controller.pcd_manager.pcd_postfix) - 4
         file_name = pcd_name[:-postfix_length]
-        self.current_path = str(self.view.controller.pcd_manager.pcd_folder.absolute())+'/'+file_name+SUFFIXES[self.camera]
+        self.current_path = str(self.view.controller.pcd_manager.pcd_folder.absolute())\
+            +'/'+file_name+SUFFIXES[self.camera]
 
     def refresh_base_pixmap(self) -> None:
         """Refresh base pixmap, should only be called when current sample changes"""
@@ -179,8 +198,6 @@ class SingleImageManager:
             self.refresh_base_pixmap()
         
         pixmap = self.base_pixmap.copy()
-
-        self.draw_cursor(pixmap)
 
         if self.view.PROJECTION:
             self.draw_pts(pixmap)
@@ -211,7 +228,7 @@ class SingleImageManager:
             fail_outside (bool) : Returns None if the converted pt is outside the img. Defaults True."""
         pos_in_scene = self.graphics_view.mapToScene(pos)
         if self.img is not None:
-            pos_in_img = self.img.mapFromScene(pos_in_scene)
+            pos_in_img = self.img.mapFromScene(pos_in_scene) 
             if (0 < pos_in_img.x() < 2048) and (0 < pos_in_img.y() < 1536) and fail_outside:
                 return pos_in_img
             elif not fail_outside:
@@ -243,13 +260,13 @@ class SingleImageManager:
         if self.cursor_p2d is None:
             return
 
-        color = QtCore.Qt.yellow if self.view.controller.drawing_mode.is_active() else QtCore.Qt.red
+        color = QtCore.Qt.gray
 
         self.draw_crosshairs(
             self.cursor_p2d,
             pixmap,
             color=color,
-            thickness=2,
+            thickness=1,
             scale=7,
             line_type=QtCore.Qt.DashLine
         )    
