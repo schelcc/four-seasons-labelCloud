@@ -87,7 +87,11 @@ class SingleImageManager:
         """mouseMove event handler"""
         # Calculate corrected pos
         corr_pos = self.event_pos_to_img(event.pos())
-        self.cursor_p2d = (corr_pos.x(), corr_pos.y()) if corr_pos is not None else None
+        if corr_pos is not None:
+            self.cursor_p2d = (corr_pos.x(), corr_pos.y())
+            
+        else:
+            self.cursor_p2d = None
 
         cursor_shape = QtCore.Qt.ArrowCursor
         if self.is_mouse_down:
@@ -243,16 +247,24 @@ class SingleImageManager:
         color = QtCore.Qt.gray,
         thickness = 2,
         scale = 2,
-        line_type = QtCore.Qt.DashLine ) -> None:
+        line_type = QtCore.Qt.SolidLine ) -> None:
         
         painter = QPainter(pixmap)
-        painter.setPen(QPen(color, thickness, line_type))
+        painter.setPen(QPen(color, thickness+2, QtCore.Qt.SolidLine))
         
         x, y = point
         
-        painter.drawLine(x-5*scale, y, x+5*scale, y)
-        painter.drawLine(x, y-5*scale, x, y+5*scale) 
-        painter.drawPoint(*point)
+        painter.drawLine(x-5*scale, y-5*scale, x-2.5*scale, y-2.5*scale)
+        painter.drawLine(x+5*scale, y-5*scale, x+2.5*scale, y-2.5*scale)
+        painter.drawLine(x-5*scale, y+5*scale, x-2.5*scale, y+2.5*scale)
+        painter.drawLine(x+5*scale, y+5*scale, x+2.5*scale, y+2.5*scale)
+
+        painter.setPen(QPen(color, thickness, QtCore.Qt.DotLine))
+        
+        x, y = point
+        
+        painter.drawLine(x-5*scale, y-5*scale, x+5*scale, y+5*scale)
+        painter.drawLine(x+5*scale, y-5*scale, x-5*scale, y+5*scale) 
         
         painter.end() 
 
@@ -271,8 +283,8 @@ class SingleImageManager:
             line_type=QtCore.Qt.DashLine
         )    
     
-    def draw_pts(self, pixmap : QPixmap, thickness : int = 3, scale : int = 6) -> None:
-        all_pts = self.view.controller.element_controller.elements
+    def draw_pts(self, pixmap : QPixmap, thickness : int = 2, scale : int = 4) -> None:
+        all_pts = self.view.controller.element_controller.get_all_elements()
         
         if len(all_pts) == 0: 
             return
@@ -280,10 +292,17 @@ class SingleImageManager:
         active_pt = self.view.controller.element_controller.active_element_id
         
         for idx, pt in enumerate(all_pts):
-            _, p2d, cam = pt
+            p2d = pt.p2d
+            cam = pt.cam
             
             if cam != self.camera: continue        
 
             color = QtCore.Qt.green if idx == active_pt else QtCore.Qt.blue
-            
             self.draw_crosshairs(p2d, pixmap, color=color, thickness=thickness, scale=scale) 
+
+        # Temporary
+        drawing_mode = self.view.controller.drawing_mode
+        if drawing_mode.drawing_strategy is not None \
+            and drawing_mode.drawing_strategy.point_2d is not None \
+            and drawing_mode.drawing_strategy.camera == self.camera:
+            self.draw_crosshairs(drawing_mode.drawing_strategy.point_2d, pixmap, color=QtCore.Qt.yellow, scale=4)
