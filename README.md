@@ -1,5 +1,5 @@
 # Four Seasons modified labelCloud
-Here you will find instructions for the installation and labelling processes. However, this only has the labelCloud code -- you need the full zipped download if you don't already have it. If you need it, ask your lead for it.
+Here you will find instructions for the installation and labeling processes. However, this only has the labelCloud code -- you need the full zipped download if you don't already have it. If you need it, ask your lead for it.
 
 **Warning - This has been difficult to get running on Macs. There are added instructions, but you are likely to run into issues if you are on MacOS.**
 
@@ -54,7 +54,7 @@ After installation, you can verify Conda is properly installed and set up by exe
 The most important part to note about the above info is the first line, ``active environment``.
 This denotes the Conda environment you are currently in. It should say ``base`` directly after installation. Some systems will show the active env right on your command prompt, but in case it doesn't that is how you can check. 
 
-Now create the environment we'll use to run our labelling software:
+Now create the environment we'll use to run our labeling software:
 ```
 conda create -n <name> python=3.8 
 ```
@@ -64,7 +64,7 @@ Now enter the environment by executing:
 ```
 conda activate label
 ```
-You should now be in your env for the labelling software. Anything you do related to python is now specific to this environment, and is done in terms of Python 3.8.
+You should now be in your env for the labeling software. Anything you do related to python is now specific to this environment, and is done in terms of Python 3.8.
 
 Now we're going to replace the labelCloud you downloaded earlier with the updated one found here. Go ahead and delete the ``labelCloud_V2`` directory the download should've come with, and replace it with this repository. We're going to clone it as a git repo to ensure that we keep it tied to this repository -- there may be changes in the future. 
 
@@ -84,13 +84,45 @@ pip install -r requirements.txt
 ```
 This should run without error, and if it does then you are properly set up! If there were errors, reach out to your lead for assistance.
 
+---
+# Calibration Mode
 
-## Labelling Procedure
-Before you can open the labelling software, you'll need samples. Check the sample division sheet that should've been shared with you (ask your lead if you don't have access), and pick a group of samples that hasn't yet been selected. Once selected, ask a lead for assistance in retrieving the corresponding samples. This requires VPN and dev server access, so you can't advance past this if you don't yet have that completed.
+## Calibration Procedure
+Before you can open the labeling software, you'll need samples. Check the sample division sheet that should've been shared with you (ask your lead if you don't have access), and pick a group of samples that hasn't yet been selected. Once selected, ask a lead for assistance in retrieving the corresponding samples. This requires VPN and dev server access, so you can't advance past this if you don't yet have that completed.
 
 For the following steps, you are assumed to be currently in the main labelCloud directory. When copying samples to your local env, they should go to the 'pointclouds' folder. **Do not delete the ``_classes.json`` file**.
 
-Once you have the samples copied over, go ahead and run the labeller just like you would any other python script (``$python3 labelCloud.py`` on linux).
+Once you have the samples copied over, go ahead and run the software just like you would any other python script (``$python3 labelCloud.py`` on linux).
+
+Before the full software starts up, it'll prompt you to select the mode you will be using: "Object Detection", "Semantic Segmentation", and "Projection Correction". Go ahead and select projection correction, as that's what we'll be using for calibration steps. You can ignore the rest of this startup dialog when going into projection correction, as there are no classes in this usage mode. There is only one "strategy" in projection correction, but still ensure the "label export format" is "point_match_raw". If done correctly, your startup dialog should look similar
+![](screenshots/startup_projection_confirmation.png)
+
+Once the full software has opened up, you should see something like this:
+![](screenshots/full_tool_calib.png)
+
+You'll find a breakdown of the interface below, please make sure to familiarize yourself with the software before continuing.
+
+### Matching a point pair
+To select a "point match pair" first press the "Match 3D - 2D" button -- this will enter you into selection mode. Regardless of order, you may now select pointcloud points which correspond to image points by clicking the point in the cloud (the cursor will indicate the selected point with a green outline), and select image points by clicking on the image at the point you've selected. Please be sure your image point is as accurate as possible (the pointcloud point automatically locks on, don't worry about getting super physically accurate in the 3D) by zooming in and panning as needed. A large green crosshair should generate at the selected 3D point, and a yellow crosshair will generate at the selected 2D point while in selection mode. Once enough points are selected, it will automatically complete the pair and you will be put back in navigation/correction mode. Be sure to save as much as possible.
+
+### Adjusting a point pair
+TODO
+
+## Calibration Mode UI Reference
+![](screenshots/calib_annotated.png)
+
+---
+
+# Label Mode
+
+> **Note:** There have been a vast number of fast changes prioritizing the calibration mode -- the labeling mode in this fork is largely untested at the moment. **Use label mode at your own risk right now**.
+
+## Labeling procedure
+Before you can open the labeling software, you'll need samples. Check the sample division sheet that should've been shared with you (ask your lead if you don't have access), and pick a group of samples that hasn't yet been selected. Once selected, ask a lead for assistance in retrieving the corresponding samples. This requires VPN and dev server access, so you can't advance past this if you don't yet have that completed.
+
+For the following steps, you are assumed to be currently in the main labelCloud directory. When copying samples to your local env, they should go to the 'pointclouds' folder. **Do not delete the ``_classes.json`` file**.
+
+Once you have the samples copied over, go ahead and run the labeler just like you would any other python script (``$python3 labelCloud.py`` on linux).
 
 Before the full tool start up, it will first confirm your class selection. This is pre set, so you can just confirm this.
 ![](screenshots/startup_label_confirmation.png)
@@ -103,6 +135,4 @@ You'll see the currently selected bounding box highlighted in green, and all oth
 
 To the right of the interface, you'll see a few things. At the top, you have the "current class" dropdown -- this just denotes what type of object the bounded feature is. The three we will focus on are 'vehicle', 'pedestrian', and 'cyclist'. Below that dropdown, you'll see some information about the bounding box itself. Below that, there's an option to deselect the current bounding box and an option to delete the current bounding box. Finally, under those you'll find a list of all bounding boxes in the current sample. You can click on these to select different bounding boxes in the current sample.
 
-There's a number of shortcuts to speed up the labelling process which can be found at [the original project](https://github.com/ch-sa/labelCloud). You are *highly* encouraged to learn these.
-
-Go ahead and experiment around with a sample or two to get the hang of the software, then get labelling!
+Go ahead and experiment around with a sample or two to get the hang of the software, then get labeling!
