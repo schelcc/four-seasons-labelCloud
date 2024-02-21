@@ -106,7 +106,10 @@ You'll find a breakdown of the interface below, please make sure to familiarize 
 To select a "point match pair" first press the "Match 3D - 2D" button -- this will enter you into selection mode. Regardless of order, you may now select pointcloud points which correspond to image points by clicking the point in the cloud (the cursor will indicate the selected point with a green outline), and select image points by clicking on the image at the point you've selected. Please be sure your image point is as accurate as possible (the pointcloud point automatically locks on, don't worry about getting super physically accurate in the 3D) by zooming in and panning as needed. A large green crosshair should generate at the selected 3D point, and a yellow crosshair will generate at the selected 2D point while in selection mode. Once enough points are selected, it will automatically complete the pair and you will be put back in navigation/correction mode. Be sure to save as much as possible.
 
 ### Adjusting a point pair
-TODO
+Once a point pair has been completed, it can be adjusted -- this is the "correction" part of "navigation/correction" from earlier. All modifications happen to the active point (the green one) and only to the 2D point. The controls are:
+ * ``w``/``s`` to move up/down respectively
+ * ``a``/``d`` to move left/right respectively
+ * ``shift+(w,a,s,d)`` to do a larger move in that direction
 
 ## Calibration Mode UI Reference
 ![](screenshots/calib_annotated.png)
