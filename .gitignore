@@ -22,6 +22,7 @@ labels/*
 manual_calib/*
 
 !pointclouds/_classes.json
+!manual_calib/
 
 sample_sets/
 sample_helper.py
