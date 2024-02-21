@@ -173,10 +173,10 @@ class Controller:
         else:
             self.view.gl_widget.selected_side_vertices = np.array([])
             self.view.status_manager.clear_message(Context.SIDE_HOVERED)
-
+    
     def image_clicked(self, pos : Point2D, cam : Camera) -> None:
         logging.debug(f"controller registered camera '{cam}' clicked at ({pos[0]}, {pos[1]})")
-        self.drawing_mode.register_point_2d(pos[0], pos[1], cam) 
+        self.drawing_mode.register_point_2d(pos, cam) 
 
     # TODO
     def mouse_clicked_labeling(self, a0 : QtGui.QMouseEvent) -> None:
@@ -226,6 +226,7 @@ class Controller:
     def mouse_move_event(self, a0: QtGui.QMouseEvent) -> None:
         """Triggers actions when the user moves the mouse"""
         self.curr_cursor_pos = a0.pos()  # Updates the current mouse cursor position
+        self.update_cursor_display()
 
         # Methods that use absolute cursor position
         if self.drawing_mode.is_active() and (not self.ctrl_pressed):
@@ -340,7 +341,6 @@ class Controller:
                 self.align_mode.reset()
                 logging.info("Resetted selected points!")
 
-
         # BBOX MANIPULATION
         elif a0.key() == Keys.Key_Z and self.LABELING:
             # z rotate counterclockwise
@@ -362,19 +362,19 @@ class Controller:
             self.element_controller.rotate_around_x(clockwise=True)
         #### DUAL EVENTS BASED ON PICKING
         ### IS NOT DRAWING
-        elif a0.key() == Keys.Key_W and not self.drawing_mode.is_active() and self.LABELING:
+        elif a0.key() == Keys.Key_W and not self.drawing_mode.is_active():
             # move backward
             self.element_controller.translate_along_y(boost=self.shift_pressed)
 
-        elif a0.key() == Keys.Key_S and not self.drawing_mode.is_active() and self.LABELING:
+        elif a0.key() == Keys.Key_S and not self.drawing_mode.is_active():
             # move forward
             self.element_controller.translate_along_y(forward=True, boost=self.shift_pressed)
 
-        elif a0.key() == Keys.Key_A and not self.drawing_mode.is_active() and self.LABELING:
+        elif a0.key() == Keys.Key_A and not self.drawing_mode.is_active():
             # move left
             self.element_controller.translate_along_x(left=True, boost=self.shift_pressed)
 
-        elif a0.key() == Keys.Key_D and not self.drawing_mode.is_active() and self.LABELING:
+        elif a0.key() == Keys.Key_D and not self.drawing_mode.is_active():
             # move right
             self.element_controller.translate_along_x(boost=self.shift_pressed)
 
@@ -450,6 +450,12 @@ class Controller:
         elif a0.key() in list(range(49, 58)) and self.LABELING:
             # select bboxes with 1-9 digit keys
             self.bbox_controller.set_active_bbox(int(a0.key()) - 49)
+
+    def update_cursor_display(self) -> None:
+        x, y, z = self.view.gl_widget.get_world_coords(self.curr_cursor_pos.x(), self.curr_cursor_pos.y())
+        self.view.row4_col1_label.setText(str(round(x, ndigits=2)))
+        self.view.row4_col2_label.setText(str(round(y, ndigits=2)))
+        self.view.row4_col3_label.setText(str(round(z, ndigits=2)))
 
     @in_labeling_only_decorator
     def select_relative_class(self, step: int):

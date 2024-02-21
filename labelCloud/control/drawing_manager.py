@@ -63,12 +63,12 @@ class ProjectionDrawingManager(BaseDrawingManager):
             self.finish() 
 
     def register_point_2d(
-        self, x: float, y: float, camera: Camera
+        self, p2d : Point2D, camera: Camera
     ) -> None:
         if self.drawing_strategy is None:
             return None
         
-        self.drawing_strategy.register_point_2d(Point2D(x, y), camera) 
+        self.drawing_strategy.register_point_2d(p2d, camera) 
         if (self.drawing_strategy.is_finished()):
             self.finish()
 
@@ -76,3 +76,7 @@ class ProjectionDrawingManager(BaseDrawingManager):
         if self.drawing_strategy is not None:
             self.point_controller.add_element(self.drawing_strategy.get_complete_point())
             self.drawing_strategy = None
+
+        # Trigger image update
+        self.view.refresh_images()
+        

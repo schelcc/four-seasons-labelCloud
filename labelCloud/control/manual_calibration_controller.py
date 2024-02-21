@@ -67,3 +67,38 @@ class ProjectionCorrectionController(BaseElementController):
     def update_camera_readout(self) -> None:
         if self.has_active_element():
             self.view.row3_col1_edit.setText(str(self.get_active_element().cam))     
+
+    def translate_along_y(self, forward=False, boost=False):
+        """Move active element within 2D view"""
+        distance = config.getfloat("LABEL", "std_translation")
+        distance*=4
+
+        if not forward:
+            distance *= -1
+        
+        if boost:
+            distance *= config.getfloat("LABEL", "boost_multiplier")
+
+        pt = self.get_active_element()
+        pt.p2d = (pt.p2d[0], pt.p2d[1] + distance)
+        self.update_element(self.active_element_id, pt)
+
+        self.view.refresh_images(do_pixmap=False)
+
+        
+    def translate_along_x(self, left=False, boost=False):
+        """Move active element within 2D view"""
+        distance = config.getfloat("LABEL", "std_translation")
+        distance*=4
+
+        if left:
+            distance *= -1
+        
+        if boost:
+            distance *= config.getfloat("LABEL", "boost_multiplier")
+
+        pt = self.get_active_element()
+        pt.p2d = (pt.p2d[0] + distance, pt.p2d[1]) 
+        self.update_element(self.active_element_id, pt)
+
+        self.view.refresh_images(do_pixmap=False)

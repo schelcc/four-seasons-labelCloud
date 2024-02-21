@@ -2491,7 +2491,7 @@
                   <bool>true</bool>
                  </property>
                  <property name="connections" stdset="0">
-                  <string>self.controller.element_controller.deselect_element</string>
+                  <string>self.controller.element_controller.deselect_element;self.refresh_images</string>
                  </property>
                  <property name="on_clicked" stdset="0">
                   <bool>true</bool>
@@ -2690,7 +2690,7 @@
                 <bool>true</bool>
                </property>
                <property name="connections" stdset="0">
-                <string>self.controller.element_controller.set_active_element</string>
+                <string>self.controller.element_controller.set_active_element;self.refresh_images</string>
                </property>
                <property name="on_clicked" stdset="0">
                 <bool>false</bool>
@@ -2714,7 +2714,7 @@
                 <bool>false</bool>
                </property>
                <property name="on_currentRowChanged" stdset="0">
-                <bool>false</bool>
+                <bool>true</bool>
                </property>
               </widget>
              </item>
