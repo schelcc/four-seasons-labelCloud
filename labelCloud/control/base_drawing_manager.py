@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from ..view.gui import GUI
 
+from ..definitions.types import Point2D, Point3D, PointPairCamera
+from ..definitions.cameras import Camera
 from ..labeling_strategies import BaseLabelingStrategy
 from ..proj_correction_strategies import BaseProjCorrection
 
@@ -50,4 +52,12 @@ class BaseDrawingManager(object):
         if self.is_active():
             self.drawing_strategy.reset()
             self.drawing_strategy = None
-            
+    
+    def register_point_3d(self, p3d : Point3D) -> None:
+        """Register point in pointcloud. Does nothing by default"""
+        pass
+
+    def register_point_2d(self, p2d : Point2D, cam : Camera) -> None:
+        """Register point in image. Does nothing by default"""
+        pass
+

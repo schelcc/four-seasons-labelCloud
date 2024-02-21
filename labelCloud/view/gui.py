@@ -414,9 +414,10 @@ class GUI(QtWidgets.QMainWindow):
             manager.set_camera(idx)
             manager.refresh_image_path()
 
-    def refresh_images(self) -> None:
+    def refresh_images(self, do_pixmap=True) -> None:
         for idx, manager in enumerate(self.img_manager_list):
-            manager.refresh_base_pixmap()
+            if do_pixmap:   
+                manager.refresh_base_pixmap()
             manager.render()
                       
     def set_checkbox_states(self) -> None:
