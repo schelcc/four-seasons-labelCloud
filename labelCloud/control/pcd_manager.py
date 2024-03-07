@@ -61,6 +61,7 @@ class PointCloudManager(object):
 
     def read_pointcloud_folder(self) -> None:
         """Checks point cloud folder and sets self.pcds to all valid point cloud file names."""
+        logging.debug("reading pointclouds")
         if self.pcd_folder.is_dir():
             self.pcds = []
             # LXH
@@ -68,12 +69,12 @@ class PointCloudManager(object):
                 l = len(self.pcd_postfix)                
                 pcd_list = glob.glob(str(self.pcd_folder.absolute())+'/*'+self.pcd_postfix)
                 pcd_list.sort()
-                for file in pcd_list:
-                    self.pcds.append(Path(file))
+                for f in pcd_list:
+                    self.pcds.append(Path(f))
             else:
-                for file in sorted(self.pcd_folder.iterdir()):
-                    if file.suffix in PointCloudManager.PCD_EXTENSIONS:
-                        self.pcds.append(file)
+                for f in sorted(self.pcd_folder.iterdir()):
+                    if f.suffix in PointCloudManager.PCD_EXTENSIONS:
+                        self.pcds.append(f)
         else:
             logging.warning(
                 f"Point cloud path {self.pcd_folder} is not a valid directory."
