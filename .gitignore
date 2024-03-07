@@ -22,7 +22,7 @@ labels/*
 manual_calib/*
 
 !pointclouds/_classes.json
-!manual_calib/
+!manual_calib/placeholder.txt
 
 sample_sets/
 sample_helper.py
