@@ -424,10 +424,10 @@ class Controller:
         elif a0.key() == Keys.Key_Alt:
             # Unset focus
             self.pcd_manager.stop_focus()
-        elif a0.key() in [Keys.Key_L, Keys.Key_Super_L, Keys.Key_Super_R] and self.LABELING:
+        elif a0.key() in [Keys.Key_L, Keys.Key_Super_L, Keys.Key_Super_R]:
             # lock on to current bbox
             if self.element_controller.has_active_element():
-                self.pcd_manager.move_focus(self.element_controller.get_active_element().center, force=True)
+                self.pcd_manager.move_focus(self.element_controller.focus_element(), force=True)
             # self.pcd_manager.reset_transformations()
         elif a0.key() in [Keys.Key_R, Keys.Key_Left]:
             # load previous sample

@@ -14,7 +14,7 @@ import numpy as np
 
 from .base_element_controller import BaseElementController, has_active_element_decorator
 
-from ..definitions import Mode
+from ..definitions import Mode, Point3D
 from ..model.bbox import BBox
 from ..utils import oglhelper
 from .config_manager import config
@@ -297,3 +297,9 @@ class BoundingBoxController(BaseElementController):
             self.pcd_manager.assign_point_label_in_box(box)
             if config.getboolean("USER_INTERFACE", "delete_box_after_assign"):
                 self.delete_current_element()
+
+    def focus_element(self) -> Optional[Point3D]:
+        if len(self.elements) > 0 and self.active_element_id >= 0:
+            return self.elements[self.active_element_id].center
+        else:
+            return None

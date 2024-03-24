@@ -8,7 +8,7 @@ from functools import wraps
 from ..utils.decorators import logging_debug
 
 from .pcd_manager import PointCloudManager
-from ..definitions import Mode
+from ..definitions import Mode, Point3D
 from ..model.element import Element 
 from .config_manager import config 
 
@@ -177,3 +177,7 @@ class BaseElementController(object):
     def update_all(self) -> None:
         """Update various UI elements associated with the controller"""
         raise NotImplementedError 
+
+    def focus_element(self) -> Optional[Point3D]:
+        """Return a 3D point corresponding to the element to lock on the the pcd view"""
+        raise NotImplementedError

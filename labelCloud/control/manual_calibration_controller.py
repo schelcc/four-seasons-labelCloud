@@ -102,3 +102,9 @@ class ProjectionCorrectionController(BaseElementController):
         self.update_element(self.active_element_id, pt)
 
         self.view.refresh_images(do_pixmap=False)
+
+    def focus_element(self) -> Optional[Point3D]:
+        if len(self.elements) > 0 and self.active_element_id >= 0:
+            return self.elements[self.active_element_id].p3d
+        else:
+            return None
