@@ -31,7 +31,7 @@ class NumpyHandler(BasePointCloudHandler):
         points = np.loadtxt(path)
         points = points.astype(np.float32)
         points = points[~np.isnan(points).any(axis=1)] # Remove NaN's
-        if config.getboolean("USER_INTERFACE", "do_intensity"):
+        if config.getboolean("POINTCLOUD", "do_intensity"):
             colors = points[:, 3]
 
             colors = np.array(

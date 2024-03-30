@@ -47,6 +47,12 @@ class SettingsDialog(QDialog):
         self.doubleSpinBox_standardzoom.setValue(
             config.getfloat("POINTCLOUD", "std_zoom")
         )
+        self.checkBox_doIntensity.setChecked(
+            config.getboolean("POINTCLOUD", "do_intensity")
+        )
+        
+
+        
 
         # Label
         self.comboBox_labelformat.addItems(LabelConfig().type.get_available_formats())
@@ -107,6 +113,9 @@ class SettingsDialog(QDialog):
         self.checkBox_show2dimage.setChecked(
             config.getboolean("USER_INTERFACE", "show_2d_image")
         )
+        self.checkBox_expZoom.setChecked(
+            config.getboolean("USER_INTERFACE", "exp_zoom")
+        )
 
     def save(self) -> None:
         # File
@@ -123,6 +132,9 @@ class SettingsDialog(QDialog):
             self.doubleSpinBox_standardtranslation.value()
         )
         config["POINTCLOUD"]["std_zoom"] = str(self.doubleSpinBox_standardzoom.value())
+        config["POINTCLOUD"]["do_intensity"] = str(
+            self.checkBox_doIntensity.isChecked()
+        )
 
         # Label
         LabelConfig().set_label_format(self.comboBox_labelformat.currentText())
@@ -172,6 +184,9 @@ class SettingsDialog(QDialog):
         ] = self.lineEdit_backgroundcolor.text()
         config["USER_INTERFACE"]["viewing_precision"] = str(
             self.spinBox_viewingprecision.value()
+        )
+        config["USER_INTERFACE"]["exp_zoom"] = str(
+            self.checkBox_expZoom.isChecked()
         )
 
         config_manager.write_into_file()
