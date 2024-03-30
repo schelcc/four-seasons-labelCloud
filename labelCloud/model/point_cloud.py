@@ -83,6 +83,7 @@ class PointCloud(object):
         
         # Point cloud transformations
         self.trans_x, self.trans_y, self.trans_z = self.init_translation
+        self.zoom_center = self.trans_z//2
         self.rot_x, self.rot_y, self.rot_z = self.init_rotation
         
         self.focus = None
@@ -320,7 +321,9 @@ class PointCloud(object):
     def set_trans_y(self, val) -> None:
         self.trans_y = val
 
-    def set_trans_z(self, val) -> None:
+    def set_trans_z(self, val, ignore_scaling=False) -> None:
+        if ignore_scaling:
+            self.zoom_center = val
         self.trans_z = val
 
     def set_translations(self, x: float, y: float, z: float) -> None:

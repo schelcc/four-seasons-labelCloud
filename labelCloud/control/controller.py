@@ -27,6 +27,7 @@ from .manual_calibration_controller import ProjectionCorrectionController
 from .base_element_controller import BaseElementController
 from ..utils.decorators import in_labeling_only_decorator, in_projection_only_decorator
 
+from ..proj_correction_strategies import PointMatchCorrection
 
 class Controller:
     MOVEMENT_THRESHOLD = 0.05
@@ -306,7 +307,7 @@ class Controller:
                 self.selected_side, -a0.angleDelta().y() / 4000  # type: ignore
             )  # ToDo implement method
         else:
-            self.pcd_manager.zoom_into(a0.angleDelta().y())
+            self.pcd_manager.zoom_into(a0.angleDelta().y(), ignore_scaling=self.shift_pressed)
             self.scroll_mode = True
 
     def key_press_event(self, a0: QtGui.QKeyEvent) -> None:
@@ -340,6 +341,7 @@ class Controller:
             elif self.align_mode.is_active:
                 self.align_mode.reset()
                 logging.info("Resetted selected points!")
+
 
         # BBOX MANIPULATION
         elif a0.key() == Keys.Key_Z and self.LABELING:

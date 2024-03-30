@@ -10,6 +10,7 @@ import glob
 import numpy as np
 import open3d as o3d
 import pkg_resources
+from math import exp
 
 from ..definitions import LabelingMode, Point3D, Color3f
 from ..io.labels.config import LabelConfig
@@ -218,10 +219,20 @@ class PointCloudManager(object):
             self.pointcloud.trans_z - distance * PointCloudManager.TRANSLATION_FACTOR
         )
 
-    def zoom_into(self, distance) -> None:
+    def zoom_into(self, distance, ignore_scaling=False) -> None:
         assert self.pointcloud is not None
-        zoom_distance = distance * PointCloudManager.ZOOM_FACTOR
-        self.pointcloud.set_trans_z(self.pointcloud.trans_z + zoom_distance)
+
+        z = self.pointcloud.trans_z
+        zoom_center = self.pointcloud.zoom_center
+
+        falloff = exp(-0.0009*(z-zoom_center)**2) if not ignore_scaling \
+            else 1
+
+        zoom_distance = distance * PointCloudManager.ZOOM_FACTOR * falloff
+
+        self.pointcloud.set_trans_z(
+            self.pointcloud.trans_z + zoom_distance,
+            ignore_scaling=ignore_scaling)
 
     def reset_translation(self) -> None:
         assert self.pointcloud is not None
