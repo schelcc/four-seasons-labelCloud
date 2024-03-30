@@ -23,6 +23,30 @@ from .label_manager import LabelManager
 if TYPE_CHECKING:
     from ..view.gui import GUI
 
+def rev_sig(x, center=0, scale=1):
+    return (1/(1+exp(1*scale*(x-center))))
+
+def exp_neg2(x, center=0, scale=1):
+    return (exp(-1*scale*(pow((x-center), 2))))
+
+def step(x, center=0):
+    return 1 if x < center else 0
+
+def step_falloff(x,
+                 center=0,
+                 exp_scale=1,
+                 sig_scale=1,
+                 long_dist_center=None,
+                 long_dist_scale=1):
+
+    y = rev_sig(x, center=center, scale=sig_scale)
+    y *= exp_neg2(x, center=center, scale=exp_scale)
+
+    if long_dist_center is not None:
+        step_add = step(x, center=long_dist_center)*long_dist_scale
+        y += step_add
+
+    return y
 
 class PointCloudManager(object):
     PCD_EXTENSIONS = BasePointCloudHandler.get_supported_extensions()
@@ -219,20 +243,21 @@ class PointCloudManager(object):
             self.pointcloud.trans_z - distance * PointCloudManager.TRANSLATION_FACTOR
         )
 
-    def zoom_into(self, distance, ignore_scaling=False) -> None:
+    def zoom_into(self, distance) -> None:
         assert self.pointcloud is not None
 
         z = self.pointcloud.trans_z
-        zoom_center = self.pointcloud.zoom_center
 
-        falloff = exp(-0.0009*(z-zoom_center)**2) if not ignore_scaling \
-            else 1
-
+        falloff = step_falloff(z,
+                               center=-14,
+                               exp_scale=0.00005,
+                               sig_scale=0.6)*0.8 \
+            if config.getboolean("USER_INTERFACE", "exp_zoom") else 1
+        
         zoom_distance = distance * PointCloudManager.ZOOM_FACTOR * falloff
 
         self.pointcloud.set_trans_z(
-            self.pointcloud.trans_z + zoom_distance,
-            ignore_scaling=ignore_scaling)
+            self.pointcloud.trans_z + zoom_distance)
 
     def reset_translation(self) -> None:
         assert self.pointcloud is not None

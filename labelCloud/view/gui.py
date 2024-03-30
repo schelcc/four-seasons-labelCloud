@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Optional, Set, Union
 import pkg_resources
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtCore import QEvent
+from PyQt5.QtCore import Qt as Keys
 from PyQt5.QtGui import QPixmap, QPainter, QPen
 from PyQt5.QtWidgets import (
     QAction,
@@ -454,6 +455,9 @@ class GUI(QtWidgets.QMainWindow):
                 self.update_bbox_stats(self.controller.element_controller.get_active_element())
             if self.PROJECTION:
                 pass
+            if event.key() == Keys.Key_B:
+                self.controller.drawing_mode.set_drawing_strategy(PointMatchCorrection(self))
+                return True
             self.controller.key_press_event(event)
             return True  # TODO: Recheck pyqt behaviour
 

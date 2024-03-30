@@ -321,9 +321,7 @@ class PointCloud(object):
     def set_trans_y(self, val) -> None:
         self.trans_y = val
 
-    def set_trans_z(self, val, ignore_scaling=False) -> None:
-        if ignore_scaling:
-            self.zoom_center = val
+    def set_trans_z(self, val) -> None:
         self.trans_z = val
 
     def set_translations(self, x: float, y: float, z: float) -> None:
@@ -426,7 +424,7 @@ class PointCloud(object):
             color_vbo = self.label_vbo
         else:
             color_vbo = self.color_vbo
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, color_vbo)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, color_vbo) # Just gotta crack the layer issue
         GL.glEnableClientState(GL.GL_COLOR_ARRAY)
         GL.glColorPointer(3, GL.GL_FLOAT, stride, None)
         GL.glDrawArrays(GL.GL_POINTS, 0, self.get_no_of_points())  # Draw the points
